@@ -61,13 +61,15 @@ if __name__ == '__main__':
     train_df = pd.read_csv(os.path.join(ORI_DIR, 'train.csv'))
     test_df = pd.read_csv(os.path.join(ORI_DIR, 'test.csv'))
 
-    convert_to_rgb(train_df, 'train')
-    convert_to_rgb(test_df, 'test')
-
     new_train = build_new_df(train_df)
     new_test = build_new_df(test_df)
 
     new_train.to_csv(os.path.join(BASE_DIR, 'train.csv'), index=False)
     new_test.to_csv(os.path.join(BASE_DIR, 'test.csv'), index=False)
+
+    convert_to_rgb(train_df, 'train')
+    convert_to_rgb(test_df, 'test')
+
+
 
 
