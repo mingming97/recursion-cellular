@@ -12,8 +12,10 @@ from PIL import Image
 sys.path.append('rxrx1-utils')
 import rxrx.io as rio
 
+
 ORI_DIR = '/home1/liangjianming/recursion-cellular'
 BASE_DIR = '/home1/liangjianming/rgb-recursion-cellular'
+
 
 def convert_to_rgb(df, split, resize=True, new_size=224, extension='jpeg'):
     N = df.shape[0]
@@ -47,7 +49,6 @@ def build_new_df(df, extension='jpeg'):
         df['id_code'].apply(lambda string: string + '_s1.{}'.format(extension)),
         df['id_code'].apply(lambda string: string + '_s2.{}'.format(extension))
     ])
-    
     return new_df
 
 
