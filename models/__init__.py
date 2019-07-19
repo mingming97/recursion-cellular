@@ -1,5 +1,5 @@
 from .resnet import ResNet
-from .focal_loss import FocalLoss
+from .pairwise_confusion import CrossEntropyWithPC
 from .classifier import Classifier
 from .densenet import DenseNet
 from .resnext import ResNeXt

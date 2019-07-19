@@ -5,7 +5,7 @@ import numpy as np
 
 class Classifier(nn.Module):
 
-    def __init__(self, extractor, feat_dim, num_classes=1103, use_focal_loss=True):
+    def __init__(self, extractor, feat_dim, num_classes=1108, use_focal_loss=True):
         super(Classifier, self).__init__()
         self.extractor = extractor
         self.feat_dim = feat_dim

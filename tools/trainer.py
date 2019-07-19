@@ -98,7 +98,6 @@ class Trainer:
 
     def _train_one_epoch(self, epoch):
         self.model.train()
-        total_loss, total_sample = 0, 0
         for i, (data, label) in enumerate(self.train_dataloader):
             data = data.cuda()
             label = label.cuda()
@@ -118,7 +117,7 @@ class Trainer:
 
             self._update_params(loss)
 
-            if self.print_frequency != 0 and (i + 1) % self.print_frequency == 0:
+            if self.print_frequency != 0 and (i + 1) % self.print_frequency != 0:
                 self._log('epoch: {} | small iter: {} | loss: {:.6f}'.format(epoch, i + 1, loss_value))
 
 

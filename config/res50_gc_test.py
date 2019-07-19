@@ -8,8 +8,8 @@ backbone = dict(
     pretrained=True,)
 
 data = dict(
-    dataset_path='/home1/liangjianming/imet-2019-fgvc6/train',
-    datalist_path='/home1/liangjianming/imet-2019-fgvc6/train.csv',
+    dataset_path='F:\\xuhuanqiang\\kaggle_recursion_cellular\\rgb-recursion-cellular-dataset\\train',
+    datalist_path='F:\\xuhuanqiang\\kaggle_recursion_cellular\\rgb-recursion-cellular-dataset\\train.csv',
     batch_size=64,
     train_transform=transforms.Compose([
                 transforms.RandomHorizontalFlip(),
@@ -27,7 +27,8 @@ data = dict(
 
 train = dict(
     epoch=100,
-    lr=0.01,
+    lr=0.001,
+    loss_weight=10,
     weight_decay=0.0001,
     momentum=0.9,
     lr_cfg=dict(
@@ -35,12 +36,12 @@ train = dict(
         step=[60, 80]),
     validate_thresh=1/7,
     accumulate_batch_size=256,
-    mix_up=True,
+    mix_up=False,
     checkpoint=None,)
 
 
 log = dict(
-    log_dir='./work_dir/res50/res50_gc_mixup',
-    log_file='res50_gc_mixup.log',
+    log_dir='./work_dir/res50/res50_gc',
+    log_file='res50_gc.log',
     print_frequency=50,)
 

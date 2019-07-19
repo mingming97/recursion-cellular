@@ -2,20 +2,20 @@ import random
 import torch
 from torch.utils import data
 
-from dataset import IMetDataset
+from dataset import RxDataset
 from dataset.utils.datalist import datalist_from_file
-from models import ResNet, ResNeXt, DenseNet, FocalLoss, Classifier
+from models import ResNet, ResNeXt, DenseNet, CrossEntropyWithPC, Classifier
 from tools import Trainer
 from utils import cfg_from_file
 import argparse
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='IMet FGVC6 ArgumentParser')
-    parser.add_argument('--config', default='config/dense121_gc_test.py', type=str)
+    parser = argparse.ArgumentParser(description='Recursion Cellular Classification ArgumentParser')
+    parser.add_argument('--config', default='config/res50_gc_test.py', type=str)
     args = parser.parse_args()
     return args
 
@@ -29,12 +29,12 @@ def main():
     data_cfg = cfg['data']
     datalist = datalist_from_file(data_cfg['datalist_path'])
     num_train_files = len(datalist) // 5 * 4
-    train_dataset = IMetDataset(data_cfg['dataset_path'],
-                                datalist[:num_train_files],
-                                transform=data_cfg['train_transform'])
-    test_dataset = IMetDataset(data_cfg['dataset_path'],
-                               datalist[num_train_files:],
-                               transform=data_cfg['test_transform'])
+    train_dataset = RxDataset(data_cfg['dataset_path'], 
+                              datalist[:num_train_files], 
+                              transform=data_cfg['train_transform'])
+    test_dataset = RxDataset(data_cfg['dataset_path'],
+                             datalist[num_train_files:],
+                             transform=data_cfg['test_transform'])
     train_dataloader = data.DataLoader(train_dataset, batch_size=data_cfg['batch_size'], shuffle=True)
     test_dataloader = data.DataLoader(test_dataset, batch_size=data_cfg['batch_size'])
 
@@ -49,7 +49,7 @@ def main():
     classifier = Classifier(backbone, backbone.out_feat_dim).cuda()
 
     train_cfg, log_cfg = cfg['train'], cfg['log']
-    criterion = FocalLoss().cuda()
+    criterion = CrossEntropyWithPC(train_cfg['loss_weight']).cuda()
     optimizer = torch.optim.SGD(classifier.parameters(), lr=train_cfg['lr'],
                                 weight_decay=train_cfg['weight_decay'], momentum=train_cfg['momentum'])
     trainer = Trainer(
