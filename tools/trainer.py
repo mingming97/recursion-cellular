@@ -123,26 +123,19 @@ class Trainer:
 
     def _validate(self):
         self.model.eval()
-        total_predict_positive, total_target_positive, total_true_positive = 0, 0, 0
+        total_sample, total_correct = 0, 0
         with torch.no_grad():
             for data, label in self.val_dataloader:
                 data = data.cuda()
                 label = label.cuda()
 
                 output = self.model(data)
-                output = output.sigmoid()
-                max_pred, _ = output.max(dim=1, keepdim=True)
-                positive_thresh = max_pred * self.validate_thresh
-                predict = (output > positive_thresh).long()
-                label = label.type_as(predict)
+                pred = output.argmax(dim=1)
+                correct = pred == label
 
-                total_predict_positive += predict.sum().item()
-                total_target_positive += label.sum().item()
-                total_true_positive += (label & predict).sum().item()
-        p = total_true_positive / total_predict_positive
-        r = total_true_positive / total_target_positive
-        score = 5 * p * r / (4 * p + r)
-        return score
+                total_sample += label.size(0)
+                total_correct += correct.sum().item()
+        return total_correct / total_sample
 
     def _save_checkpoint(self, epoch, score):
         state = {
