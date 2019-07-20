@@ -27,8 +27,7 @@ data = dict(
 
 train = dict(
     epoch=100,
-    lr=0.001,
-    loss_weight=10,
+    lr=0.01,
     weight_decay=0.0001,
     momentum=0.9,
     lr_cfg=dict(
@@ -40,7 +39,7 @@ train = dict(
 
 
 log = dict(
-    log_dir='./work_dir/res50/res50_gc',
-    log_file='res50_gc.log',
+    log_dir='./work_dir/res50/res50_gc_bs256',
+    log_file='logs.log',
     print_frequency=50,)
 
