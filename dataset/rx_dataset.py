@@ -21,6 +21,14 @@ class RxDataset(data.Dataset):
         # datalist: a list like [('img_name', 'label'), ...]
         self.datalist = datalist
 
+        self._cal_num_dict()
+
+    def _cal_num_dict(self):
+        self.num_dict = {k: 0 for k in range(1108)}
+        for _, label in self.datalist:
+            num = self.num_dict.get(label, 0)
+            self.num_dict[label] = num + 1
+
     def __len__(self):
         return len(self.datalist)
 

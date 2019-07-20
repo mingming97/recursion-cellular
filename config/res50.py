@@ -3,8 +3,8 @@ from torchvision import transforms
 backbone = dict(
     type='ResNet',
     depth=50,
-    stage_with_context_block=[False, True, True, True],
-    context_block_cfg=dict(ratio=1./4),
+    stage_with_context_block=[False, False, False, False],
+    context_block_cfg=None,
     pretrained=True,)
 
 data = dict(
@@ -27,20 +27,20 @@ data = dict(
 
 train = dict(
     epoch=100,
-    lr=0.001,
+    lr=0.01,
     loss_weight=10,
     weight_decay=0.0001,
     momentum=0.9,
     lr_cfg=dict(
         gamma=0.1,
         step=[60, 80]),
-    accumulate_batch_size=256,
+    accumulate_batch_size=-1,
     mix_up=False,
     checkpoint=None,)
 
 
 log = dict(
-    log_dir='./work_dir/res50/res50_gc',
-    log_file='res50_gc.log',
+    log_dir='./work_dir/res50/res50',
+    log_file='logs.log',
     print_frequency=50,)
 

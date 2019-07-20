@@ -1,21 +1,23 @@
-import random
 import torch
 from torch.utils import data
+import torch.nn as nn
 
 from dataset import RxDataset
 from dataset.utils.datalist import datalist_from_file
 from models import ResNet, ResNeXt, DenseNet, CrossEntropyWithPC, Classifier
 from tools import Trainer
 from utils import cfg_from_file
-import argparse
 
+import argparse
+import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+torch.backends.cudnn.benchmark = True
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Recursion Cellular Classification ArgumentParser')
-    parser.add_argument('--config', default='config/res50_gc_test.py', type=str)
+    parser.add_argument('--config', type=str, default=None)
     args = parser.parse_args()
     return args
 
@@ -38,6 +40,12 @@ def main():
     train_dataloader = data.DataLoader(train_dataset, batch_size=data_cfg['batch_size'], shuffle=True)
     test_dataloader = data.DataLoader(test_dataset, batch_size=data_cfg['batch_size'])
 
+    # from pprint import pprint
+    # print('train num dict: ')
+    # pprint(train_dataset.num_dict)
+    # print('test num dict: ')
+    # pprint(test_dataset.num_dict)
+
     backbone_cfg = cfg['backbone'].copy()
     backbone_type = backbone_cfg.pop('type')
     if backbone_type == 'ResNet':
@@ -49,7 +57,12 @@ def main():
     classifier = Classifier(backbone, backbone.out_feat_dim).cuda()
 
     train_cfg, log_cfg = cfg['train'], cfg['log']
-    criterion = CrossEntropyWithPC(train_cfg['loss_weight']).cuda()
+    with_pairwise_confusion = train_cfg.get('pairwise_confusion', False)
+    if with_pairwise_confusion:
+        print('using pairwise_confusion')
+        criterion = CrossEntropyWithPC(train_cfg['loss_weight'])
+    else:
+        criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(classifier.parameters(), lr=train_cfg['lr'],
                                 weight_decay=train_cfg['weight_decay'], momentum=train_cfg['momentum'])
     trainer = Trainer(

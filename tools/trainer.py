@@ -22,7 +22,6 @@ class Trainer:
         self.log_dir = log_cfg['log_dir']
         self.print_frequency = log_cfg['print_frequency']
         self.lr_cfg = train_cfg['lr_cfg']
-        self.validate_thresh = train_cfg['validate_thresh']
         self.mix_up = train_cfg.get('mix_up', False)
 
         if not os.path.exists(self.log_dir):
@@ -117,13 +116,14 @@ class Trainer:
 
             self._update_params(loss)
 
-            if self.print_frequency != 0 and (i + 1) % self.print_frequency != 0:
+            if self.print_frequency != 0 and (i + 1) % self.print_frequency == 0:
                 self._log('epoch: {} | small iter: {} | loss: {:.6f}'.format(epoch, i + 1, loss_value))
 
 
     def _validate(self):
         self.model.eval()
         total_sample, total_correct = 0, 0
+        correct_dict = {k: 0 for k in range(1108)}
         with torch.no_grad():
             for data, label in self.val_dataloader:
                 data = data.cuda()
@@ -135,6 +135,15 @@ class Trainer:
 
                 total_sample += label.size(0)
                 total_correct += correct.sum().item()
+
+                correct_label = label[correct].cpu().numpy()
+                for cl in correct_label:
+                    num = correct_dict.get(cl, 0)
+                    correct_dict[cl] = num + 1
+
+        for k, v in correct_dict.items():
+            self._log('class{} : {}/{}'.format(k, v, self.val_dataloader.dataset.num_dict[k]))
+
         return total_correct / total_sample
 
     def _save_checkpoint(self, epoch, score):
