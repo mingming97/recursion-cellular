@@ -3,15 +3,12 @@ from torchvision import transforms
 backbone = dict(
     type='DenseNet',
     depth=121,
-    context_block_cfg=dict(
-        ratio=1./16, 
-        context_modeling_type='avg',
-        fusion_type='mul'),
+    context_block_cfg=None,
     pretrained=True,)
 
 data = dict(
-    dataset_path='/home1/liangjianming/imet-2019-fgvc6/train',
-    datalist_path='/home1/liangjianming/imet-2019-fgvc6/train.csv',
+    dataset_path='/home1/liangjianming/rgb-recursion-cellular/train',
+    datalist_path='/home1/liangjianming/rgb-recursion-cellular/train.csv',
     batch_size=32,
     train_transform=transforms.Compose([
                 transforms.RandomHorizontalFlip(),
@@ -35,13 +32,13 @@ train = dict(
     lr_cfg=dict(
         gamma=0.1,
         step=[60, 80]),
-    validate_thresh=1/7,
-    accumulate_batch_size=256,
+    accumulate_batch_size=-1,
+    mixup=False,
     checkpoint=None,)
 
 
 log = dict(
-    log_dir='./work_dir/dense121/dense121_se/',
-    log_file='dense121_se.log',
+    log_dir='./work_dir/dense121/dense121',
+    log_file='logs.log',
     print_frequency=50,)
 
