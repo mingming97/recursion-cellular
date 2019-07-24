@@ -25,13 +25,14 @@ class Bottleneck(_Bottleneck):
 
 
 class ResNeXt(nn.Module):
+    
     # block, layers, out_feat_dim, url
     arch_settings = {
         50: (Bottleneck, (3, 4, 6, 3), 2048, 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth'),
         101: (Bottleneck, (3, 4, 23, 3), 2048, 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth')
     }
 
-    def __init__(self, depth, groups=1, base_width=4, 
+    def __init__(self, depth, in_channel=3, groups=1, base_width=4, 
                  stage_with_context_block=[False, False, False, False],
                  context_block_cfg=None,
                  pretrained=False):
@@ -46,7 +47,7 @@ class ResNeXt(nn.Module):
             base_width = 8
 
         self.inplanes = 64
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)

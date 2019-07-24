@@ -60,13 +60,13 @@ class DenseNet(nn.Module):
         201: (64, 32, (6, 12, 48, 32), 1920, 'https://download.pytorch.org/models/densenet201-c1103571.pth'),
         161: (96, 48, (6, 12, 36, 24), 2208, 'https://download.pytorch.org/models/densenet161-8d451a50.pth')
     }
-    def __init__(self, depth, bn_size=4, drop_rate=0, context_block_cfg=None, pretrained=False):
+    def __init__(self, depth, in_channel=3, bn_size=4, drop_rate=0, context_block_cfg=None, pretrained=False):
         super(DenseNet, self).__init__()
         assert depth in self.arch_settings
         num_init_features, growth_rate, block_config, self.out_feat_dim, url = self.arch_settings[depth]
 
         self.features = nn.Sequential(OrderedDict([
-            ('conv0', nn.Conv2d(3, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+            ('conv0', nn.Conv2d(in_channel, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
             ('norm0', nn.BatchNorm2d(num_init_features)),
             ('relu0', nn.ReLU(inplace=True)),
             ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
