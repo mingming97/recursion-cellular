@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+from .lr_scheduler import LrScheduler
 
 
 class Trainer:
@@ -50,9 +51,17 @@ class Trainer:
             self.best_score = state['score']
             self._log('load checkpoint.\nepoch: {}    score: {}'.format(
                 self.start_epoch, self.best_score))
+            self.cur_iter = state.get('iter', 1)
+            self.lr_cfg['warmup'] = None
+            self.best_epoch = state.get('best_epoch', -1)
         else:
-            self.start_epoch = 0
+            self.start_epoch = 1
             self.best_score = 0
+            self.best_epoch = -1
+            self.cur_iter = 1
+
+        self.lr_scheduler = LrScheduler(self.optimizer, self.lr_cfg)
+
 
     def _log(self, logstr):
         print(logstr)
@@ -61,23 +70,18 @@ class Trainer:
         self.log_file.flush()
 
 
-    def _lr_schedule(self, epoch):
-        base_lr = [param_group['lr'] for param_group in self.optimizer.param_groups]
-        lr_step = self.lr_cfg['step']
-        if epoch in lr_step:
-            for param_group, lr in zip(self.optimizer.param_groups, base_lr):
-                param_group['lr'] = lr * self.lr_cfg['gamma']
-
-
     def train(self):
         for epoch in range(self.start_epoch, self.epoch):
-            self._lr_schedule(epoch)
+            self.lr_scheduler.epoch_schedule(epoch)
+            self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
             score = self._validate()
             self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
             if self.best_score < score:
                 self.best_score = score
-                self._save_checkpoint(epoch, score)
+                self.best_epoch = epoch
+                self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
+            self._save_checkpoint(epoch, score)
 
 
     def _update_params(self, loss):
@@ -85,6 +89,7 @@ class Trainer:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            self.cur_iter += 1
         else:
             self.accu_counter += 1
             loss = loss / self.update_freq
@@ -93,11 +98,14 @@ class Trainer:
                 self.optimizer.step()
                 self.optimizer.zero_grad()
                 self.accu_counter = 0
+                self.cur_iter += 1
 
 
     def _train_one_epoch(self, epoch):
         self.model.train()
         for i, (data, label) in enumerate(self.train_dataloader):
+            is_log = self.cur_iter % self.print_frequency == 0
+            self.lr_scheduler.iter_schedule(self.cur_iter, is_log)
             data = data.cuda()
             label = label.cuda()
 
@@ -114,10 +122,10 @@ class Trainer:
 
             loss_value = loss.item()
 
-            self._update_params(loss)
+            if self.print_frequency != 0 and is_log:
+                self._log('epoch: {} | iter: {} | loss: {:.6f}'.format(epoch, self.cur_iter, loss_value))
 
-            if self.print_frequency != 0 and (i + 1) % self.print_frequency == 0:
-                self._log('epoch: {} | small iter: {} | loss: {:.6f}'.format(epoch, i + 1, loss_value))
+            self._update_params(loss)
 
 
     def _validate(self):
@@ -146,10 +154,12 @@ class Trainer:
 
         return total_correct / total_sample
 
+
     def _save_checkpoint(self, epoch, score):
         state = {
+            'iter': self.cur_iter,
             'epoch': epoch,
             'score': score,
             'model_params': self.model.state_dict()
         }
-        torch.save(state, os.path.join(self.log_dir, 'checkpoint.pth'))
+        torch.save(state, os.path.join(self.log_dir, 'epoch_{}.pth'.format(epoch)))

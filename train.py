@@ -11,7 +11,7 @@ from utils import cfg_from_file
 import argparse
 import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 torch.backends.cudnn.benchmark = True
 
 
