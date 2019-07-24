@@ -7,20 +7,27 @@ import os
 
 
 class RxDataset(data.Dataset):
-    def __init__(self, img_dir, datalist, transform=None):
+    def __init__(self, img_dir, datalist, transform=None, data_mode='rgb'):
         super(RxDataset, self).__init__()
+        assert data_mode in ('rgb', 'six_channels')
         self.img_dir = img_dir
 
-        self.transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(
-            [0.485, 0.456, 0.406], 
-            [0.229, 0.224, 0.225])
-        ]) if transform is None else transform
+        if data_mode == 'rgb':
+            self.transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(
+                [0.485, 0.456, 0.406],
+                [0.229, 0.224, 0.225])
+            ]) if transform is None else transform
+        else:
+            self.transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor()
+            ]) if transform is None else transform
 
         # datalist: a list like [('img_name', 'label'), ...]
         self.datalist = datalist
-
+        self.data_mode = data_mode
         self._cal_num_dict()
 
     def _cal_num_dict(self):
@@ -33,9 +40,20 @@ class RxDataset(data.Dataset):
         return len(self.datalist)
 
     def __getitem__(self, idx):
-        img_name, label = self.datalist[idx]
-        img = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
-        img = self.transform(img)
-        if label is not None:
-            label = torch.tensor(label)
-        return img, label
+        if self.data_mode == 'rgb':
+            img_name, label = self.datalist[idx]
+            img = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
+            img = self.transform(img)
+            if label is not None:
+                label = torch.tensor(label)
+            return img, label
+        else:
+            img_path, label = self.datalist[idx]
+            imgs = []
+            for i in range(1, 7):
+                img_name = img_path + 'w{}.png'.format(i)
+                img = Image.open(os.path.join(self.img_dir, img_name))
+                imgs.append(self.transform(img))
+            if label is not None:
+                label = torch.tensor(label)
+            return torch.stack(imgs).squeeze(), label
