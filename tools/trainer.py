@@ -162,4 +162,4 @@ class Trainer:
             'score': score,
             'model_params': self.model.state_dict()
         }
-        torch.save(state, os.path.join(self.log_dir, 'epoch_{}.pth'.format(epoch)))
+        torch.save(state, os.path.join(self.log_dir, 'checkpoint.pth'))
