@@ -1,13 +1,13 @@
 import os
 import torch
 from models import ResNet, ResNeXt, DenseNet, Classifier
+import torch.nn.functional as F
 
 
 class Ensembler:
 
-    def __init__(self, net_cfgs, test_dataloader, validate_thresh):
+    def __init__(self, net_cfgs, test_dataloader):
         self.test_dataloader = test_dataloader
-        self.validate_thresh = validate_thresh
         self.net_list = []
         for cfg in net_cfgs:
             backbone_cfg = cfg.copy()
@@ -34,27 +34,32 @@ class Ensembler:
         with torch.no_grad():
             for net in self.net_list:
                 pred = net(imgs)
-                pred = pred.cpu().sigmoid()
+                pred = F.softmax(pred.cpu(), dim=1)
                 preds.append(pred)
         res = sum(preds) / len(preds)
         return res
 
 
     def test_on_dataloader(self):
-        total_predict_positive, total_target_positive, total_true_positive = 0, 0, 0
-        print('length of dataloader: {}'.format(len(self.test_dataloader)))
-        for data, label in self.test_dataloader:
-            data = data.cuda()
-            pred = self.inference(data)
-            max_pred, _ = pred.max(dim=1, keepdim=True)
-            positive_thresh = max_pred * self.validate_thresh
-            predict = (pred > positive_thresh).long()
-            label = label.type_as(predict)
+        total_sample, total_correct = 0, 0
+        correct_dict = {k: 0 for k in range(1108)}
+        with torch.no_grad():
+            for data, label in self.test_dataloader:
+                data = data.cuda()
 
-            total_predict_positive += predict.sum().item()
-            total_target_positive += label.sum().item()
-            total_true_positive += (label & predict).sum().item()
-        p = total_true_positive / total_predict_positive
-        r = total_true_positive / total_target_positive
-        score = 5 * p * r / (4 * p + r)
-        return score
+                output = self.inference(data)
+                pred = output.argmax(dim=1)
+                correct = pred == label
+
+                total_sample += label.size(0)
+                total_correct += correct.sum().item()
+
+                correct_label = label[correct].numpy()
+                for cl in correct_label:
+                    num = correct_dict.get(cl, 0)
+                    correct_dict[cl] = num + 1
+
+        for k, v in correct_dict.items():
+            print('class{} : {}/{}'.format(k, v, self.test_dataloader.dataset.num_dict[k]))
+
+        return total_correct / total_sample
