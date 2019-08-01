@@ -68,8 +68,8 @@ if __name__ == '__main__':
     new_train.to_csv(os.path.join(BASE_DIR, 'train.csv'), index=False)
     new_test.to_csv(os.path.join(BASE_DIR, 'test.csv'), index=False)
 
-    convert_to_rgb(train_df, 'train')
-    convert_to_rgb(test_df, 'test')
+    convert_to_rgb(train_df, 'train', resize=False)
+    convert_to_rgb(test_df, 'test', resize=False)
 
 
 
