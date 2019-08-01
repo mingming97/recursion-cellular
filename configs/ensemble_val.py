@@ -27,7 +27,7 @@ net_cfgs = [
 data = dict(
     dataset_path='/home1/liangjianming/rgb-recursion-cellular/train',
     datalist_path='/home1/liangjianming/rgb-recursion-cellular/train.csv',
-    batch_size=256,
+    batch_size=128,
     test_transform=transforms.Compose([
                 transforms.Resize((224, 224)),
                 transforms.ToTensor(),

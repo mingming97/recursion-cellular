@@ -72,6 +72,9 @@ class Ensembler:
 
 
     def test_on_dataloader(self, datalist_path, outfile):
+        submission = pd.read_csv(datalist_path)
+        submission = submission[:len(submission)//2]
+
         with torch.no_grad():
             preds = np.empty(0)
             for data_s1, data_s2 in tqdm(self.dataloader):
@@ -83,7 +86,6 @@ class Ensembler:
                 idx = output.argmax(dim=1).numpy()
                 preds = np.append(preds, idx, axis=0)
 
-        submission = pd.read_csv(datalist_path)
         submission['sirna'] = preds.astype(int)
         submission.to_csv(outfile, index=False, columns=['id_code', 'sirna'])
 
