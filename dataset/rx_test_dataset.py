@@ -52,7 +52,7 @@ class RxTestDataset(data.Dataset):
         else:
             imgs = []
             for i in range(1, 7):
-                img_name = img_path + 'w{}.png'.format(i)
+                img_name = img_name + 'w{}.png'.format(i)
                 img = Image.open(os.path.join(self.img_dir, img_name))
                 imgs.append(self.transform(img))
             imgs = torch.stack(imgs).squeeze()
