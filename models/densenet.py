@@ -112,8 +112,8 @@ class DenseNet(nn.Module):
 
     def _load_pretrained(self, url):
         print('loading from {}'.format(url))
-        if self.features[0].in_channels != 3:
-            conv = self.features[0]
+        conv = self.features[0]
+        if conv.in_channels != 3:
             self.features[0] = nn.Conv2d(3, conv.out_channels, kernel_size=7, stride=2, padding=3, bias=False)
         state_dict = load_state_dict_from_url(url)
         pattern = re.compile(
@@ -125,7 +125,7 @@ class DenseNet(nn.Module):
                 state_dict[new_key] = state_dict[key]
                 del state_dict[key]
         self.load_state_dict(state_dict, strict=False)
-        if self.features[0].in_channels != 3:
+        if conv.in_channels != 3:
             self.features[0] = conv
         print('load over')
 

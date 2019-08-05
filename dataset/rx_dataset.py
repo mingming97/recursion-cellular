@@ -40,19 +40,20 @@ class RxDataset(data.Dataset):
         return len(self.datalist)
 
     def __getitem__(self, idx):
-        img_name, label = self.datalist[idx]
         if self.data_mode == 'rgb':
-            imgs = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
-            imgs = self.transform(imgs)
+            img_name, label = self.datalist[idx]
+            img = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
+            img = self.transform(img)
+            if label is not None:
+                label = torch.tensor(label)
+            return img, label
         else:
+            img_path, label = self.datalist[idx]
             imgs = []
             for i in range(1, 7):
                 img_name = img_path + 'w{}.png'.format(i)
                 img = Image.open(os.path.join(self.img_dir, img_name))
                 imgs.append(self.transform(img))
-            imgs = torch.stack(imgs).squeeze()
-        if label is not None:
-            label = torch.tensor(label)
-            return imgs, label
-        else:
-            return imgs
+            if label is not None:
+                label = torch.tensor(label)
+            return torch.stack(imgs).squeeze(), label

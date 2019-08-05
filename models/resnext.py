@@ -65,12 +65,12 @@ class ResNeXt(nn.Module):
 
     def _load_pretrained(self, url):
         print('loading from {}'.format(url))
-        if self.conv1.in_channels != 3:
-            conv = self.conv1
+        conv = self.conv1
+        if conv.in_channels != 3:
             self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
         state_dict = load_state_dict_from_url(url)
         self.load_state_dict(state_dict, strict=False)
-        if self.conv1.in_channels != 3:
+        if conv.in_channels != 3:
             self.conv1 = conv       
         print('load over!')
 

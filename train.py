@@ -9,9 +9,8 @@ from tools import Trainer
 from utils import cfg_from_file
 
 import argparse
-import random
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '7'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 torch.backends.cudnn.benchmark = True
 
 
@@ -29,14 +28,16 @@ def main():
     print('using config: {}'.format(args.config))
 
     data_cfg = cfg['data']
-    datalist = datalist_from_file(data_cfg['datalist_path'])
-    num_train_files = len(datalist) // 5 * 4
-    train_dataset = RxDataset(data_cfg['dataset_path'], 
-                              datalist[:num_train_files], 
-                              transform=data_cfg['train_transform'])
+    datalist = datalist_from_file(data_cfg['datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
+    num_train_files = len(datalist) // 10 * 9
+    train_dataset = RxDataset(data_cfg['dataset_path'],
+                              datalist[:num_train_files],
+                              transform=data_cfg.get('train_transform', None),
+                              data_mode=data_cfg.get('data_mode', 'rgb'))
     test_dataset = RxDataset(data_cfg['dataset_path'],
                              datalist[num_train_files:],
-                             transform=data_cfg['test_transform'])
+                             transform=data_cfg.get('test_transform', None),
+                             data_mode=data_cfg.get('data_mode', 'rgb'))
     train_dataloader = data.DataLoader(train_dataset, batch_size=data_cfg['batch_size'], shuffle=True)
     test_dataloader = data.DataLoader(test_dataset, batch_size=data_cfg['batch_size'])
 

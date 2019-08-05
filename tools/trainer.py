@@ -22,6 +22,7 @@ class Trainer:
         self.epoch = train_cfg['epoch']
         self.log_dir = log_cfg['log_dir']
         self.print_frequency = log_cfg['print_frequency']
+        self.save_frequency = log_cfg.get('save_frequency', 10)
         self.lr_cfg = train_cfg['lr_cfg']
         self.mix_up = train_cfg.get('mix_up', False)
 
@@ -69,7 +70,6 @@ class Trainer:
         self.log_file.write('\n')
         self.log_file.flush()
 
-
     def train(self):
         for epoch in range(self.start_epoch, self.epoch):
             self.lr_scheduler.epoch_schedule(epoch)
@@ -81,7 +81,9 @@ class Trainer:
                 self.best_score = score
                 self.best_epoch = epoch
                 self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
-            self._save_checkpoint(epoch, score)
+                self._save_checkpoint(epoch, score, name='best_model')
+            if epoch % self.save_frequency == 0:
+                self._save_checkpoint(epoch, score, name='checkpoint')
 
 
     def _update_params(self, loss):
@@ -155,11 +157,11 @@ class Trainer:
         return total_correct / total_sample
 
 
-    def _save_checkpoint(self, epoch, score):
+    def _save_checkpoint(self, epoch, score, name='checkpoint'):
         state = {
             'iter': self.cur_iter,
             'epoch': epoch,
             'score': score,
             'model_params': self.model.state_dict()
         }
-        torch.save(state, os.path.join(self.log_dir, 'checkpoint.pth'))
+        torch.save(state, os.path.join(self.log_dir, '{name}.pth'.format(name=name)))
