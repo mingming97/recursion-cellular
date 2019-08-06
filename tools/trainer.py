@@ -83,7 +83,7 @@ class Trainer:
                 self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
                 self._save_checkpoint(epoch, score, name='best_model')
             if epoch % self.save_frequency == 0:
-                self._save_checkpoint(epoch, score, name='checkpoint')
+                self._save_checkpoint(epoch, score, name='epoch_{}'.format(epoch))
 
 
     def _update_params(self, loss):
@@ -106,7 +106,7 @@ class Trainer:
     def _train_one_epoch(self, epoch):
         self.model.train()
         for i, (data, label) in enumerate(self.train_dataloader):
-            is_log = self.cur_iter % self.print_frequency == 0
+            is_log = self.cur_iter % self.print_frequency == 0 and self.accu_counter == 0
             self.lr_scheduler.iter_schedule(self.cur_iter, is_log)
             data = data.cuda()
             label = label.cuda()
@@ -164,4 +164,4 @@ class Trainer:
             'score': score,
             'model_params': self.model.state_dict()
         }
-        torch.save(state, os.path.join(self.log_dir, '{name}.pth'.format(name=name)))
+        torch.save(state, os.path.join(self.log_dir, '{}.pth'.format(name)))
