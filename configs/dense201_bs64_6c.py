@@ -8,8 +8,8 @@ backbone = dict(
     pretrained=True,)
 
 data = dict(
-    dataset_path=r'F:\xuhuanqiang\kaggle_recursion_cellular\recursion-cellular-dataset\train',
-    datalist_path=r'F:\xuhuanqiang\kaggle_recursion_cellular\rgb-recursion-cellular-dataset\train.csv',
+    dataset_path='/home1/liangjianming/recursion-cellular/train',
+    datalist_path='/home1/liangjianming/rgb-recursion-cellular/train.csv',
     data_mode='six_channels',
     batch_size=8,
     train_transform=transforms.ToTensor(),

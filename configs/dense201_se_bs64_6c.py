@@ -20,10 +20,12 @@ data = dict(
 
 train = dict(
     epoch=60,
-    lr=0.02,
+    lr=0.01,
     weight_decay=0.0001,
     momentum=0.9,
     lr_cfg=dict(
+        warmup='linear',
+        warmup_iters=500,
         gamma=0.1,
         step=[30, 50]),
     accumulate_batch_size=64,
