@@ -27,9 +27,12 @@ data = dict(
 
 train = dict(
     epoch=100,
-    lr=0.01,
-    weight_decay=0.0001,
-    momentum=0.9,
+    loss_cfg=dict(
+        loss_type='cross_entropy'),
+    optimizer_cfg=dict(
+        lr=0.01,
+        weight_decay=0.0001,
+        momentum=0.9),
     lr_cfg=dict(
         gamma=0.1,
         step=[60, 80]),

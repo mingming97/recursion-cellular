@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from dataset import RxDataset
 from dataset.utils.datalist import datalist_from_file
-from models import ResNet, ResNeXt, DenseNet, CrossEntropyWithPC, Classifier
+from models import *
 from tools import Trainer
 from utils import cfg_from_file
 
@@ -24,6 +24,7 @@ def parse_args():
 def main():
     args = parse_args()
 
+    # init configs
     cfg = cfg_from_file(args.config)
     print('using config: {}'.format(args.config))
 
@@ -41,12 +42,7 @@ def main():
     train_dataloader = data.DataLoader(train_dataset, batch_size=data_cfg['batch_size'], shuffle=True)
     test_dataloader = data.DataLoader(test_dataset, batch_size=data_cfg['batch_size'])
 
-    # from pprint import pprint
-    # print('train num dict: ')
-    # pprint(train_dataset.num_dict)
-    # print('test num dict: ')
-    # pprint(test_dataset.num_dict)
-
+    # init backbone
     backbone_cfg = cfg['backbone'].copy()
     backbone_type = backbone_cfg.pop('type')
     if backbone_type == 'ResNet':
@@ -55,17 +51,31 @@ def main():
         backbone = ResNeXt(**backbone_cfg)
     elif backbone_type == 'DenseNet':
         backbone = DenseNet(**backbone_cfg)
-    classifier = Classifier(backbone, backbone.out_feat_dim).cuda()
 
+    # init loss criterion
     train_cfg, log_cfg = cfg['train'], cfg['log']
-    with_pairwise_confusion = train_cfg.get('pairwise_confusion', False)
-    if with_pairwise_confusion:
+    loss_cfg = train_cfg['loss_cfg'].copy()
+    loss_type = loss_cfg.pop('loss_type')
+    embedding = False
+    if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')
-        criterion = CrossEntropyWithPC(train_cfg['loss_weight'])
-    else:
+        criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
+    elif loss_type == 'cross_entropy':
         criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(classifier.parameters(), lr=train_cfg['lr'],
-                                weight_decay=train_cfg['weight_decay'], momentum=train_cfg['momentum'])
+    elif loss_type == 'AM_softmax':
+        criterion = AMSoftmaxLoss(backbone.out_feat_dim, **loss_cfg)
+        embedding = True
+    else:
+        raise ValueError('Illegal loss_type: {}'.format(loss_type))
+    criterion = criterion.cuda()
+
+    # init classifier
+    classifier = Classifier(backbone, backbone.out_feat_dim, embedding=embedding).cuda()
+
+    # init optimizer
+    optimizer = torch.optim.SGD([{'params': classifier.parameters()},
+                                {'params': criterion.parameters()}],
+                                **train_cfg['optimizer_cfg'])
     trainer = Trainer(
         model=classifier, 
         train_dataloader=train_dataloader, 

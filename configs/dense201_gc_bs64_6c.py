@@ -4,10 +4,7 @@ backbone = dict(
     type='DenseNet',
     depth=201,
     in_channel=6,
-    context_block_cfg=dict(
-        ratio=1./16, 
-        context_modeling_type='avg',
-        fusion_type='mul'),
+    context_block_cfg=dict(ratio=1./4),
     pretrained=True,)
 
 data = dict(
@@ -20,6 +17,8 @@ data = dict(
 
 train = dict(
     epoch=60,
+    loss_cfg=dict(
+        loss_type='cross_entropy'),
     optimizer_cfg=dict(
         lr=0.01,
         weight_decay=0.0001,
@@ -34,7 +33,7 @@ train = dict(
 
 
 log = dict(
-    log_dir='./work_dir/dense201/dense201_se_bs64',
+    log_dir='./work_dir/dense201/dense201_gc_bs64',
     log_file='logs.log',
     print_frequency=50,
     save_frequency=10)
