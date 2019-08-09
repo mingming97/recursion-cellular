@@ -20,4 +20,3 @@ class Classifier(nn.Module):
             return feat
         pred = self.classifier(feat)
         return pred
-
