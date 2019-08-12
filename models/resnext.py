@@ -46,6 +46,7 @@ class ResNeXt(nn.Module):
             groups = 32
             base_width = 8
 
+        self.in_channel = in_channel
         self.inplanes = 64
         self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -118,3 +119,9 @@ class ResNeXt(nn.Module):
 
         return x
 
+    # def train(self, mode=True):
+    #     super(ResNeXt, self).train(mode)
+    #     if mode:
+    #         for m in self.modules():
+    #             if isinstance(m, nn.BatchNorm2d):
+    #                 m.eval()

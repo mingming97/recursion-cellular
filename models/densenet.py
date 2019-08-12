@@ -64,7 +64,7 @@ class DenseNet(nn.Module):
         super(DenseNet, self).__init__()
         assert depth in self.arch_settings
         num_init_features, growth_rate, block_config, self.out_feat_dim, url = self.arch_settings[depth]
-
+        self.in_channel = in_channel
         self.features = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(in_channel, num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
             ('norm0', nn.BatchNorm2d(num_init_features)),
@@ -134,3 +134,10 @@ class DenseNet(nn.Module):
         out = F.relu(features, inplace=True)
         out = self.avg_pool(features).view(features.size(0), -1)
         return out
+
+    # def train(self, mode=True):
+    #     super(DenseNet, self).train(mode)
+    #     if mode:
+    #         for m in self.modules():
+    #             if isinstance(m, nn.BatchNorm2d):
+    #                 m.eval()

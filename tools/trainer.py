@@ -35,13 +35,13 @@ class Trainer:
 
         self.accumulate_batch_size = train_cfg.get('accumulate_batch_size', -1)
         self.with_accumulate_batch = self.accumulate_batch_size > 0
+        self.accu_counter = 0
         if self.with_accumulate_batch:
             assert self.accumulate_batch_size > self.train_dataloader.batch_size
             assert self.accumulate_batch_size % self.train_dataloader.batch_size == 0
             self._log('Using accumulate batch. Small batch size: {}. Accumulate batch size: {}'.format(
                 self.train_dataloader.batch_size, self.accumulate_batch_size))
             self.update_freq = self.accumulate_batch_size // self.train_dataloader.batch_size
-            self.accu_counter = 0
              
         checkpoint = train_cfg['checkpoint']
         if checkpoint is not None:

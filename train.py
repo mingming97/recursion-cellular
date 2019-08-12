@@ -55,7 +55,7 @@ def main():
     # init loss criterion
     train_cfg, log_cfg = cfg['train'], cfg['log']
     loss_cfg = train_cfg['loss_cfg'].copy()
-    loss_type = loss_cfg.pop('loss_type')
+    loss_type = loss_cfg.pop('type')
     embedding = False
     if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')

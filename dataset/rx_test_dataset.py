@@ -2,6 +2,7 @@ import torch
 from torch.utils import data
 from torchvision import transforms
 from PIL import Image
+import numpy as np
 
 import os
 
@@ -52,10 +53,13 @@ class RxTestDataset(data.Dataset):
         else:
             imgs = []
             for i in range(1, 7):
-                img_name = img_name + 'w{}.png'.format(i)
-                img = Image.open(os.path.join(self.img_dir, img_name))
-                imgs.append(self.transform(img))
-            imgs = torch.stack(imgs).squeeze()
+                img_full_name = img_name + 'w{}.png'.format(i)
+                img = Image.open(os.path.join(self.img_dir, img_full_name))
+                imgs.append(img)
+            if label is not None:
+                label = torch.tensor(label)
+            imgs = np.stack(imgs, axis=-1)
+            imgs = self.transform(imgs)
         return imgs
 
     def __getitem__(self, idx):

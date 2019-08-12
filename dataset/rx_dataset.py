@@ -2,6 +2,7 @@ import torch
 from torch.utils import data
 from torchvision import transforms
 from PIL import Image
+import numpy as np
 
 import os
 
@@ -53,7 +54,9 @@ class RxDataset(data.Dataset):
             for i in range(1, 7):
                 img_name = img_path + 'w{}.png'.format(i)
                 img = Image.open(os.path.join(self.img_dir, img_name))
-                imgs.append(self.transform(img))
+                imgs.append(img)
             if label is not None:
                 label = torch.tensor(label)
-            return torch.stack(imgs).squeeze(), label
+            img = np.stack(imgs, axis=-1)
+            img = self.transform(img)
+            return img, label

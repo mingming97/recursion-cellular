@@ -110,6 +110,7 @@ class ResNet(nn.Module):
         assert depth in self.arch_settings
         block, layers, self.out_feat_dim, url = self.arch_settings[depth]
 
+        self.in_channel = in_channel
         self.inplanes = 64
         self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -169,3 +170,10 @@ class ResNet(nn.Module):
         x = self.avg_pool(x).view(x.size(0), -1)
 
         return x
+
+    # def train(self, mode=True):
+    #     super(ResNet, self).train(mode)
+    #     if mode:
+    #         for m in self.modules():
+    #             if isinstance(m, nn.BatchNorm2d):
+    #                 m.eval()

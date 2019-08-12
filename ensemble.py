@@ -29,17 +29,19 @@ def main():
     print('using config: {}'.format(args.config))
 
     data_cfg = cfg['data']
-    datalist = datalist_from_file(data_cfg['datalist_path'])
+    datalist = datalist_from_file(data_cfg['datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
 
     if args.mode == 'val':
-        num_train_files = len(datalist) // 5 * 4
+        num_train_files = len(datalist) // 10 * 9
         dataset = RxDataset(data_cfg['dataset_path'],
                             datalist[num_train_files:],
-                            transform=data_cfg['test_transform'])
+                            transform=data_cfg['test_transform'],
+                            data_mode=data_cfg.get('data_mode', 'rgb'))
     else:
         dataset = RxTestDataset(data_cfg['dataset_path'],
                                 datalist,
-                                transform=data_cfg['test_transform'])
+                                transform=data_cfg['test_transform'],
+                                data_mode=data_cfg.get('data_mode', 'rgb'))
 
     dataloader = data.DataLoader(dataset, batch_size=data_cfg['batch_size'], shuffle=False)
 
@@ -48,7 +50,11 @@ def main():
         score = ensembler.val_on_dataloader()
         print('validation score: {}'.format(score))
     else:
-        ensembler.test_on_dataloader(datalist_path=data_cfg['datalist_path'], outfile='submission.csv')
+        outdir = 'csv_output'
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+        outfile = os.path.join(outdir, cfg.get('outfile', 'submission.csv'))
+        ensembler.test_on_dataloader(datalist_path=data_cfg['datalist_path'], outfile=outfile)
 
 if __name__ == '__main__':
     main()
