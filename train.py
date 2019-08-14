@@ -52,25 +52,24 @@ def main():
     elif backbone_type == 'DenseNet':
         backbone = DenseNet(**backbone_cfg)
 
+    # init classifier
+    classifier = Classifier(backbone, backbone.out_feat_dim, embedding=False).cuda()
+
     # init loss criterion
     train_cfg, log_cfg = cfg['train'], cfg['log']
     loss_cfg = train_cfg['loss_cfg'].copy()
     loss_type = loss_cfg.pop('type')
-    embedding = False
     if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')
         criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
     elif loss_type == 'cross_entropy':
         criterion = nn.CrossEntropyLoss()
     elif loss_type == 'AM_softmax':
-        criterion = AMSoftmaxLoss(backbone.out_feat_dim, **loss_cfg)
-        embedding = True
+        # criterion = AMSoftmaxLoss(backbone.out_feat_dim, **loss_cfg)
+        criterion = AMSoftmaxLoss(classifier.kernel, **loss_cfg)
     else:
         raise ValueError('Illegal loss_type: {}'.format(loss_type))
     criterion = criterion.cuda()
-
-    # init classifier
-    classifier = Classifier(backbone, backbone.out_feat_dim, embedding=embedding).cuda()
 
     # init optimizer
     optimizer = torch.optim.SGD([{'params': classifier.parameters()},

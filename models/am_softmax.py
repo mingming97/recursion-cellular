@@ -5,13 +5,12 @@ import math
 
 
 class AMSoftmaxLoss(nn.Module):
-    def __init__(self, feat_dim, n_classes=1108, m=0.35, s=30):
+    def __init__(self, kernel, n_classes=1108, m=0.35, s=30):
         super(AMSoftmaxLoss, self).__init__()
-        self.feat_dim = feat_dim
         self.n_classes = n_classes
         self.m = m
         self.s = s
-        self.kernel = nn.Parameter(torch.Tensor(n_classes, feat_dim))
+        self.kernel = kernel
         nn.init.kaiming_uniform_(self.kernel, a=math.sqrt(5))
         self.CE = nn.CrossEntropyLoss()
 

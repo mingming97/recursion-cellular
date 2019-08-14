@@ -17,6 +17,7 @@ class Classifier(nn.Module):
             self.classifier = nn.Linear(feat_dim, num_classes)
         if self.use_bn_first:
             self.bn = nn.BatchNorm2d(6)
+        self.kernel = self.classifier.weight
 
     def forward(self, x):
         if self.use_bn_first:
