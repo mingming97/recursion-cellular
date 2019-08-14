@@ -10,7 +10,7 @@ from utils import cfg_from_file
 
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 torch.backends.cudnn.benchmark = True
 
 
@@ -52,29 +52,27 @@ def main():
     elif backbone_type == 'DenseNet':
         backbone = DenseNet(**backbone_cfg)
 
-    # init classifier
-    classifier = Classifier(backbone, backbone.out_feat_dim, embedding=False).cuda()
-
     # init loss criterion
     train_cfg, log_cfg = cfg['train'], cfg['log']
     loss_cfg = train_cfg['loss_cfg'].copy()
     loss_type = loss_cfg.pop('type')
     if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')
+        classifier = Classifier(backbone, backbone.out_feat_dim, embedding=False)
         criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
     elif loss_type == 'cross_entropy':
+        classifier = Classifier(backbone, backbone.out_feat_dim, embedding=False)
         criterion = nn.CrossEntropyLoss()
     elif loss_type == 'AM_softmax':
-        # criterion = AMSoftmaxLoss(backbone.out_feat_dim, **loss_cfg)
-        criterion = AMSoftmaxLoss(classifier.kernel, **loss_cfg)
+        classifier = AMSoftmaxClassifier(backbone, backbone.out_feat_dim)
+        criterion = AMSoftmaxLoss(**loss_cfg)
     else:
         raise ValueError('Illegal loss_type: {}'.format(loss_type))
+    classifier = classifier.cuda()
     criterion = criterion.cuda()
 
     # init optimizer
-    optimizer = torch.optim.SGD([{'params': classifier.parameters()},
-                                {'params': criterion.parameters()}],
-                                **train_cfg['optimizer_cfg'])
+    optimizer = torch.optim.SGD(classifier.parameters(), **train_cfg['optimizer_cfg'])
     trainer = Trainer(
         model=classifier, 
         train_dataloader=train_dataloader, 
