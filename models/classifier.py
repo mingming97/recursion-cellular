@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,6 +38,7 @@ class AMSoftmaxClassifier(nn.Module):
         self.num_classes = num_classes
 
         self.weight = nn.Parameter(torch.Tensor(self.num_classes, feat_dim))
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, x):
         feat = self.extractor(x)
