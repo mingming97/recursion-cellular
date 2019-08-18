@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+from tqdm import tqdm
 from .lr_scheduler import LrScheduler
 
 
@@ -22,6 +23,7 @@ class Trainer:
         self.epoch = train_cfg['epoch']
         self.log_dir = log_cfg['log_dir']
         self.print_frequency = log_cfg['print_frequency']
+        self.val_frequency = log_cfg.get('val_frequency', 1)
         self.save_frequency = log_cfg.get('save_frequency', 10)
         self.lr_cfg = train_cfg['lr_cfg']
         self.mix_up = train_cfg.get('mix_up', False)
@@ -75,13 +77,14 @@ class Trainer:
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
-            score = self._validate()
-            self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
-            if self.best_score < score:
-                self.best_score = score
-                self.best_epoch = epoch
-                self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
-                self._save_checkpoint(epoch, score, name='best_model')
+            if self.epoch % self.val_frequency == 0:
+                score = self._validate()
+                self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
+                if self.best_score < score:
+                    self.best_score = score
+                    self.best_epoch = epoch
+                    self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
+                    self._save_checkpoint(epoch, score, name='best_model')
             if epoch % self.save_frequency == 0:
                 self._save_checkpoint(epoch, score, name='epoch_{}'.format(epoch))
 
@@ -136,10 +139,10 @@ class Trainer:
         correct_dict = {k: 0 for k in range(1108)}
 
         # compute center feat
-        center_feat = None if getattr(self.model, 'forward_center', None) is None else [[] for i in range(1108)]
+        center_feat = None if self.model.extra_module is None else [[] for i in range(1108)]
         if center_feat is not None:
             with torch.no_grad():
-                for data, label in self.train_dataloader:
+                for data, label in tqdm(self.train_dataloader):
                     data = data.cuda()
                     feat = self.model.forward_test(data).cpu().numpy()
                     for l, f in zip(label, feat):
@@ -151,20 +154,20 @@ class Trainer:
                 data = data.cuda()
                 label = label.cuda()
 
-                output = self.model.forward_test(data, center_feat)
+                output = self.model.forward_test(data, center_feat).cuda()
                 pred = output.argmax(dim=1)
                 correct = pred == label
 
                 total_sample += label.size(0)
                 total_correct += correct.sum().item()
 
-                correct_label = label[correct].cpu().numpy()
-                for cl in correct_label:
-                    num = correct_dict.get(cl, 0)
-                    correct_dict[cl] = num + 1
+                # correct_label = label[correct].cpu().numpy()
+                # for cl in correct_label:
+                #     num = correct_dict.get(cl, 0)
+                #     correct_dict[cl] = num + 1
 
-        for k, v in correct_dict.items():
-            self._log('class{} : {}/{}'.format(k, v, self.val_dataloader.dataset.num_dict[k]))
+        # for k, v in correct_dict.items():
+        #     self._log('class{} : {}/{}'.format(k, v, self.val_dataloader.dataset.num_dict[k]))
 
         return total_correct / total_sample
 

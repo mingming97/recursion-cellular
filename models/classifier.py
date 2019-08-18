@@ -44,7 +44,7 @@ class Classifier(nn.Module):
                     return feat
                 feat = feat.cpu().numpy()
                 similarity = cosine_similarity(feat, center_feat)
-                return similarity
+                return torch.from_numpy(similarity)
         return feat
 
 
