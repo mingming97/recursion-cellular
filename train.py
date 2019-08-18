@@ -10,13 +10,13 @@ from utils import cfg_from_file
 
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 torch.backends.cudnn.benchmark = True
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Recursion Cellular Classification ArgumentParser')
-    parser.add_argument('--config', type=str, default=None)
+    parser.add_argument('--config', type=str, default=None, required=True)
     args = parser.parse_args()
     return args
 
