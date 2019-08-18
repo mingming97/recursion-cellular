@@ -76,6 +76,7 @@ class Trainer:
         for epoch in range(self.start_epoch, self.epoch):
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
+            score = self._validate()
             self._train_one_epoch(epoch)
             if self.epoch % self.val_frequency == 0:
                 score = self._validate()
@@ -138,7 +139,7 @@ class Trainer:
         total_sample, total_correct = 0, 0
         correct_dict = {k: 0 for k in range(1108)}
 
-        # compute center feat
+        # compute center features
         center_feat = None if self.model.extra_module is None else [[] for i in range(1108)]
         if center_feat is not None:
             with torch.no_grad():
@@ -147,7 +148,9 @@ class Trainer:
                     feat = self.model.forward_test(data).cpu().numpy()
                     for l, f in zip(label, feat):
                         center_feat[int(l.item())].append(f)
-            center_feat = np.mean(np.array(center_feat), axis=1)
+            for i in range(1108):
+                center_feat[i] = np.mean(np.array(center_feat[i]), axis=0)
+            center_feat = np.array(center_feat)
 
         with torch.no_grad():
             for data, label in self.val_dataloader:

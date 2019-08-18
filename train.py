@@ -30,7 +30,7 @@ def main():
 
     data_cfg = cfg['data']
     datalist = datalist_from_file(data_cfg['datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
-    num_train_files = len(datalist) // 10 * 9
+    num_train_files = len(datalist) // 10 * 1
     train_dataset = RxDataset(data_cfg['dataset_path'],
                               datalist[:num_train_files],
                               transform=data_cfg.get('train_transform', None),
