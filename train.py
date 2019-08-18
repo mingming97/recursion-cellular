@@ -10,7 +10,7 @@ from utils import cfg_from_file
 
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 torch.backends.cudnn.benchmark = True
 
 
@@ -56,16 +56,21 @@ def main():
     train_cfg, log_cfg = cfg['train'], cfg['log']
     loss_cfg = train_cfg['loss_cfg'].copy()
     loss_type = loss_cfg.pop('type')
+    extra_module = None
     if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')
-        classifier = Classifier(backbone, backbone.out_feat_dim, embedding=False)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
         criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
     elif loss_type == 'cross_entropy':
-        classifier = Classifier(backbone, backbone.out_feat_dim, embedding=False)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
         criterion = nn.CrossEntropyLoss()
     elif loss_type == 'AM_softmax':
-        classifier = AMSoftmaxClassifier(backbone, backbone.out_feat_dim)
+        classifier = AMSoftmaxClassifier(backbone, backbone.out_feat_dim, extra_module)
         criterion = AMSoftmaxLoss(**loss_cfg)
+    elif loss_type == 'Arc_Face':
+        extra_module = ArcModule(**loss_cfg)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
+        criterion = nn.CrossEntropyLoss()
     else:
         raise ValueError('Illegal loss_type: {}'.format(loss_type))
     classifier = classifier.cuda()

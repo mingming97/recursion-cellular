@@ -47,7 +47,7 @@ class Trainer:
         if checkpoint is not None:
             assert os.path.exists(checkpoint)
             state = torch.load(checkpoint)
-            model.load_state_dict(state['model_params'])
+            model.load_state_dict(state['model_params'], strict=False)
             self.start_epoch = state['epoch'] + 1
             self.best_score = state['score']
             self._log('load checkpoint.\nepoch: {}    score: {}'.format(
@@ -119,7 +119,7 @@ class Trainer:
                 pred = self.model(mix_data)
                 loss = lambda_ * self.criterion(pred, label) + (1 - lambda_) * self.criterion(pred, new_label)
             else:
-                pred = self.model(data)
+                pred = self.model(data, label)
                 loss = self.criterion(pred, label)
 
             loss_value = loss.item()
@@ -134,12 +134,24 @@ class Trainer:
         self.model.eval()
         total_sample, total_correct = 0, 0
         correct_dict = {k: 0 for k in range(1108)}
+
+        # compute center feat
+        center_feat = None if getattr(self.model, 'forward_center', None) is None else [[] for i in range(1108)]
+        if center_feat is not None:
+            with torch.no_grad():
+                for data, label in self.train_dataloader:
+                    data = data.cuda()
+                    feat = self.model.forward_test(data).cpu().numpy()
+                    for l, f in zip(label, feat):
+                        center_feat[int(l.item())].append(f)
+            center_feat = np.mean(np.array(center_feat), axis=1)
+
         with torch.no_grad():
             for data, label in self.val_dataloader:
                 data = data.cuda()
                 label = label.cuda()
 
-                output = self.model(data)
+                output = self.model.forward_test(data, center_feat)
                 pred = output.argmax(dim=1)
                 correct = pred == label
 
