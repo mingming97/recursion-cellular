@@ -76,7 +76,6 @@ class Trainer:
         for epoch in range(self.start_epoch, self.epoch):
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
-            score = self._validate()
             self._train_one_epoch(epoch)
             if self.epoch % self.val_frequency == 0:
                 score = self._validate()
