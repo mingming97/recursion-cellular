@@ -142,7 +142,7 @@ class Trainer:
         center_feat = None if self.model.extra_module is None else [[] for i in range(1108)]
         if center_feat is not None:
             with torch.no_grad():
-                for data, label in tqdm(self.train_dataloader):
+                for data, label in self.train_dataloader:
                     data = data.cuda()
                     feat = self.model.forward_test(data).cpu().numpy()
                     for l, f in zip(label, feat):
