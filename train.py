@@ -65,8 +65,9 @@ def main():
         classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
         criterion = nn.CrossEntropyLoss()
     elif loss_type == 'AM_softmax':
-        classifier = AMSoftmaxClassifier(backbone, backbone.out_feat_dim, extra_module)
-        criterion = AMSoftmaxLoss(**loss_cfg)
+        extra_module = AmModule(**loss_cfg)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
+        criterion = nn.CrossEntropyLoss()
     elif loss_type == 'Arc_Face':
         extra_module = ArcModule(**loss_cfg)
         classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
