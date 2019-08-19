@@ -11,7 +11,7 @@ class RxDataset(data.Dataset):
     def __init__(self, img_dir, datalist, transform=None, data_mode='rgb', normalize=None, resize=None):
         super(RxDataset, self).__init__()
         assert data_mode in ('rgb', 'six_channels')
-        assert isinstance(normalize, dict)
+        assert normalize is None or isinstance(normalize, dict)
         self.img_dir = img_dir
 
         if data_mode == 'rgb':
