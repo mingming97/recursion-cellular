@@ -52,8 +52,8 @@ class Trainer:
             model.load_state_dict(state['model_params'], strict=False)
             self.start_epoch = state['epoch'] + 1
             self.best_score = state['score']
-            self._log('load checkpoint.\nepoch: {}    score: {}'.format(
-                self.start_epoch, self.best_score))
+            self._log('load checkpoint: {}.\nepoch: {}    score: {}'.format(
+                checkpoint, self.start_epoch, self.best_score))
             self.cur_iter = state.get('iter', 1)
             self.lr_cfg['warmup'] = None
             self.best_epoch = state.get('best_epoch', -1)
@@ -77,7 +77,7 @@ class Trainer:
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
-            if self.epoch % self.val_frequency == 0:
+            if epoch % self.val_frequency == 0:
                 score = self._validate()
                 self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
                 if self.best_score < score:
