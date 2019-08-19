@@ -8,22 +8,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class Classifier(nn.Module):
 
-    def __init__(self, extractor, feat_dim, extra_module=None, num_classes=1108):
+    def __init__(self, extractor, feat_dim, extra_module=None, pre_layers=None, num_classes=1108):
         super(Classifier, self).__init__()
+        self.pre_layers = pre_layers
         self.extractor = extractor
         self.extra_module = extra_module
         out_feat_dim = self.extra_module.in_features if self.extra_module is not None else num_classes
         self.feat_dim = feat_dim
         self.num_classes = num_classes
-        # self.use_bn_first = self.extractor.in_channel == 6
-        self.use_bn_first = False
         self.classifier = nn.Linear(feat_dim, out_feat_dim)
-        if self.use_bn_first:
-            self.bn = nn.BatchNorm2d(6)
 
     def forward(self, x, label=None):
-        if self.use_bn_first:
-            x = self.bn(x)
+        if self.pre_layers is not None:
+            x = self.pre_layers(x)
         feat = self.extractor(x)
         feat = self.classifier(feat)
         if self.extra_module is not None:
@@ -34,8 +31,8 @@ class Classifier(nn.Module):
 
     def forward_test(self, x, center_feat=None):
         with torch.no_grad():
-            if self.use_bn_first:
-                x = self.bn(x)
+            if self.pre_layers is not None:
+                x = self.pre_layers(x)
             feat = self.extractor(x)
             feat = self.classifier(feat)
             if self.extra_module is not None:

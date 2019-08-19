@@ -1,14 +1,14 @@
 import torch
 from torch.utils import data
 from torchvision import transforms
+import torchvision.transforms.functional as F
 from PIL import Image
 import numpy as np
-
 import os
 
 
 class RxDataset(data.Dataset):
-    def __init__(self, img_dir, datalist, transform=None, data_mode='rgb'):
+    def __init__(self, img_dir, datalist, transform=None, data_mode='rgb', normalize=None, resize=None):
         super(RxDataset, self).__init__()
         assert data_mode in ('rgb', 'six_channels')
         self.img_dir = img_dir
@@ -21,14 +21,14 @@ class RxDataset(data.Dataset):
                 [0.229, 0.224, 0.225])
             ]) if transform is None else transform
         else:
-            self.transform = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor()
-            ]) if transform is None else transform
+            self.transform = transform
 
         # datalist: a list like [('img_name', 'label'), ...]
         self.datalist = datalist
         self.data_mode = data_mode
+
+        self.normalize = normalize
+        self.resize = resize
         self._cal_num_dict()
 
     def _cal_num_dict(self):
@@ -54,9 +54,24 @@ class RxDataset(data.Dataset):
             for i in range(1, 7):
                 img_name = img_path + 'w{}.png'.format(i)
                 img = Image.open(os.path.join(self.img_dir, img_name))
+                img = self._single_channel_transform(img, i-1)
                 imgs.append(img)
+            
             if label is not None:
                 label = torch.tensor(label)
-            img = np.stack(imgs, axis=-1)
-            img = self.transform(img)
+            img = torch.stack(imgs, dim=0)
+            if self.transform is not None:
+                img = self.transform(img)
             return img, label
+
+    def _single_channel_transform(self, img, channels_index):
+        if self.normalize is not None:
+            img = np.array(img, dtype=np.float)
+            img /= 255.
+            img = (img - self.normalize[0][channels_index]) / self.normalize[1][channels_index]
+            img = Image.fromarray(img)
+
+        if self.resize is not None:
+            img = F.resize(img, self.resize)
+        img = F.to_tensor(img).squeeze()
+        return img

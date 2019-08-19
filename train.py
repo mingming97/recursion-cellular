@@ -10,7 +10,7 @@ from utils import cfg_from_file
 
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 torch.backends.cudnn.benchmark = True
 
 
@@ -34,13 +34,18 @@ def main():
     train_dataset = RxDataset(data_cfg['dataset_path'],
                               datalist[:num_train_files],
                               transform=data_cfg.get('train_transform', None),
-                              data_mode=data_cfg.get('data_mode', 'rgb'))
+                              data_mode=data_cfg.get('data_mode', 'rgb'),
+                              normalize=data_cfg.get('normalize', None),
+                              resize=data_cfg.get('resize', None))
     test_dataset = RxDataset(data_cfg['dataset_path'],
                              datalist[num_train_files:],
                              transform=data_cfg.get('test_transform', None),
-                             data_mode=data_cfg.get('data_mode', 'rgb'))
+                             data_mode=data_cfg.get('data_mode', 'rgb'),
+                             normalize=data_cfg.get('normalize', None),
+                             resize=data_cfg.get('resize', None))
     train_dataloader = data.DataLoader(train_dataset, batch_size=data_cfg['batch_size'], shuffle=True)
     test_dataloader = data.DataLoader(test_dataset, batch_size=data_cfg['batch_size'])
+    pre_layers = data_cfg.get('pre_layers', None)
 
     # init backbone
     backbone_cfg = cfg['backbone'].copy()
@@ -59,18 +64,18 @@ def main():
     extra_module = None
     if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
         criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
     elif loss_type == 'cross_entropy':
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
         criterion = nn.CrossEntropyLoss()
     elif loss_type == 'AM_softmax':
         extra_module = AmModule(**loss_cfg)
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
         criterion = nn.CrossEntropyLoss()
     elif loss_type == 'Arc_Face':
         extra_module = ArcModule(**loss_cfg)
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module)
+        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
         criterion = nn.CrossEntropyLoss()
     else:
         raise ValueError('Illegal loss_type: {}'.format(loss_type))
