@@ -65,13 +65,9 @@ class RxDataset(data.Dataset):
             return img, label
 
     def _single_channel_transform(self, img, channels_index):
-        if self.normalize is not None:
-            img = np.array(img, dtype=np.float)
-            img /= 255.
-            img = (img - self.normalize[0][channels_index]) / self.normalize[1][channels_index]
-            img = Image.fromarray(img)
-
         if self.resize is not None:
             img = F.resize(img, self.resize)
         img = F.to_tensor(img).squeeze()
+        if self.normalize is not None:
+            img.sub_(self.normalize[0][channels_index]).div_(self.normalize[1][channels_index])
         return img
