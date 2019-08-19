@@ -11,6 +11,7 @@ class RxDataset(data.Dataset):
     def __init__(self, img_dir, datalist, transform=None, data_mode='rgb', normalize=None, resize=None):
         super(RxDataset, self).__init__()
         assert data_mode in ('rgb', 'six_channels')
+        assert isinstance(normalize, dict)
         self.img_dir = img_dir
 
         if data_mode == 'rgb':
@@ -69,5 +70,5 @@ class RxDataset(data.Dataset):
             img = F.resize(img, self.resize)
         img = F.to_tensor(img).squeeze()
         if self.normalize is not None:
-            img.sub_(self.normalize[0][channels_index]).div_(self.normalize[1][channels_index])
+            img.sub_(self.normalize['mean'][channels_index]).div_(self.normalize['std'][channels_index])
         return img

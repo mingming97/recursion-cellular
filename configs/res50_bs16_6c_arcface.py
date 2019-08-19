@@ -12,16 +12,10 @@ data = dict(
     datalist_path='/home1/liangjianming/rgb-recursion-cellular/train.csv',
     data_mode='six_channels',
     batch_size=16,
-    train_transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
-                             std=[0.03121084, 0.04773749, 0.02298717, 0.0307236, 0.01843595, 0.02129923])
-    ]),
-    test_transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
-                             std=[0.03121084, 0.04773749, 0.02298717, 0.0307236, 0.01843595, 0.02129923])
-    ]), )
+    resize=(384, 384),
+    normalize=dict(
+        mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
+        std=[0.03121084, 0.04773749, 0.02298717, 0.0307236, 0.01843595, 0.02129923]),)
 
 train = dict(
     epoch=60,
@@ -45,9 +39,8 @@ train = dict(
 
 
 log = dict(
-    log_dir='./work_dir/res50/res50_bs16_6c_arcface',
+    log_dir='./work_dir/res50/res50_bs16_arcface',
     log_file='logs.log',
     val_frequency=5,
     save_frequency=10,
     print_frequency=50)
-
