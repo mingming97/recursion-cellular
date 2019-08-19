@@ -44,12 +44,19 @@ class Trainer:
             self._log('Using accumulate batch. Small batch size: {}. Accumulate batch size: {}'.format(
                 self.train_dataloader.batch_size, self.accumulate_batch_size))
             self.update_freq = self.accumulate_batch_size // self.train_dataloader.batch_size
-             
+        
+        load_from = train_cfg.get('load_from', None)
+        if load_from is not None:
+            assert os.path.exists(load_from)
+            state = torch.load(load_from)
+            model.load_state_dict(state['model_params'])
+            self._log('load state dict: {}'.format(load_from))
+            
         checkpoint = train_cfg['checkpoint']
         if checkpoint is not None:
             assert os.path.exists(checkpoint)
             state = torch.load(checkpoint)
-            model.load_state_dict(state['model_params'], strict=False)
+            model.load_state_dict(state['model_params'])
             self.start_epoch = state['epoch'] + 1
             self.best_score = state['score']
             self._log('load checkpoint: {}.\nepoch: {}    score: {}'.format(
