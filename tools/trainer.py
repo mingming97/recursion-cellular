@@ -8,12 +8,12 @@ class Trainer:
                  model, 
                  train_dataloader, 
                  val_dataloader, 
-                 criterion, 
+                 criterions, 
                  optimizer,
                  train_cfg, 
                  log_cfg):
         self.model = model
-        self.criterion = criterion
+        self.criterions = criterions
         self.optimizer = optimizer
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
@@ -117,11 +117,14 @@ class Trainer:
             label = label.cuda()
 
             pred = self.model(data, label)
-            loss = self.model.loss(pred, label, self.criterion)
-            loss_value = loss.item()
+            losses = self.model.losses(pred, label, self.criterions)
+            loss_values = [loss.item() for loss in losses].__repr__()
+            loss = sum(losses)
+            tot_loss = loss.item()
 
             if self.print_frequency != 0 and is_log:
-                self._log('epoch: {} | iter: {} | loss: {:.6f}'.format(epoch, self.cur_iter, loss_value))
+                self._log('epoch: {} | iter: {} | loss_values: {} | tot_loss: {:.6f}'.format(
+                    epoch, self.cur_iter, loss_values, tot_loss))
 
             self._update_params(loss)
 

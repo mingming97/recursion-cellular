@@ -3,7 +3,6 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from sklearn.metrics.pairwise import cosine_similarity
 
 
 class Classifier(nn.Module):
@@ -21,16 +20,18 @@ class Classifier(nn.Module):
         feat = self.extractor(x)
         outputs = []
         for i, metric_fc in enumerate(self.metric_fcs):
-            if i == 0:
+            if isinstance(metric_fc, nn.Linear):
                 output = metric_fc(feat)
             else:
                 output = metric_fc(feat, label)
             outputs.append(output)
         return outputs
 
-    def loss(self, outputs, label, criterion):
-        losses = [criterion(output, label) for output in outputs]
-        return sum(losses) / len(losses)
+    def losses(self, outputs, label, criterions):
+        losses = []
+        for output, criterion in zip(outputs, criterions):
+            losses.append(criterion(output, label))
+        return losses
 
     def forward_test(self, x):
         if self.pre_layers is not None:

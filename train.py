@@ -10,7 +10,7 @@ from utils import cfg_from_file
 
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 torch.backends.cudnn.benchmark = True
 
 
@@ -63,7 +63,7 @@ def main():
     train_cfg, log_cfg = cfg['train'], cfg['log']
     metric_cfg = train_cfg['metric_cfg'].copy()
     metric_types = metric_cfg.pop('type')
-    metric_fcs = []
+    metric_fcs = nn.ModuleList()
     for metric_type in metric_types:
         if metric_type == 'add_margin':
             metric_fc = AddMarginProduct(backbone.out_feat_dim, **metric_cfg)
@@ -77,27 +77,28 @@ def main():
             raise ValueError('Illegal metric_type: {}'.format(metric_type))
         metric_fcs.append(metric_fc.cuda())
     classifier = Classifier(backbone, metric_fcs, pre_layers).cuda()
+    for name, _ in classifier.named_parameters():
+        print(name)
 
     # init loss criterion
     loss_cfg = train_cfg['loss_cfg'].copy()
-    loss_type = loss_cfg.pop('type')
-    if loss_type == 'pairwise_confusion':
-        print('using pairwise_confusion')
-        criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
-    elif loss_type == 'cross_entropy':
-        criterion = nn.CrossEntropyLoss()
-    elif loss_type == 'focal_loss':
-        criterion = FocalLoss()
-    else:
-        raise ValueError('Illegal loss_type: {}'.format(loss_type))
-    criterion = criterion.cuda()
+    loss_types = loss_cfg.pop('type')
+    criterions = list()
+    for loss_type in loss_types:
+        if loss_type == 'cross_entropy':
+            criterion = nn.CrossEntropyLoss()
+        elif loss_type == 'focal_loss':
+            criterion = FocalLoss()
+        else:
+            raise ValueError('Illegal loss_type: {}'.format(loss_type))
+        criterions.append(criterion.cuda())
 
     # init optimizer
     optimizer_cfg = train_cfg['optimizer_cfg'].copy()
     optimizer_type = optimizer_cfg.pop('type')
     if optimizer_type == 'SGD':
         optimizer = torch.optim.SGD(classifier.parameters(), **optimizer_cfg)
-    elif optimizer_type == 'adam':
+    elif optimizer_type == 'Adam':
         optimizer = torch.optim.Adam(classifier.parameters(), **optimizer_cfg)
     else:
         raise ValueError('Illegal optimizer_type:{}'.format(optimizer_type))
@@ -106,7 +107,7 @@ def main():
         model=classifier, 
         train_dataloader=train_dataloader, 
         val_dataloader=test_dataloader,
-        criterion=criterion, 
+        criterions=criterions, 
         optimizer=optimizer,
         train_cfg=train_cfg,
         log_cfg=log_cfg)
