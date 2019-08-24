@@ -8,12 +8,14 @@ class Trainer:
                  model, 
                  train_dataloader, 
                  val_dataloader, 
-                 criterions, 
+                 criterions,
+                 loss_weights,
                  optimizer,
                  train_cfg, 
                  log_cfg):
         self.model = model
         self.criterions = criterions
+        self.loss_weights = loss_weights
         self.optimizer = optimizer
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
@@ -118,8 +120,9 @@ class Trainer:
 
             pred = self.model(data, label)
             losses = self.model.losses(pred, label, self.criterions)
-            loss_values = [loss.item() for loss in losses].__repr__()
-            loss = sum(losses)
+            weighted_losses = [weight * loss for weight, loss in zip(self.loss_weights, losses)]
+            loss_values = [loss.item() for loss in weighted_losses].__repr__()
+            loss = sum(weighted_losses)
             tot_loss = loss.item()
 
             if self.print_frequency != 0 and is_log:
