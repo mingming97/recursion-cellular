@@ -1,23 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 18-6-7 上午10:11
-@author: ronghuaiyang
-"""
-
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class FocalLoss(nn.Module):
 
-    def __init__(self, gamma=0, eps=1e-7):
+    def __init__(self, gamma=2.0, alpha=0.25):
         super(FocalLoss, self).__init__()
         self.gamma = gamma
-        self.eps = eps
-        self.ce = torch.nn.CrossEntropyLoss()
+        self.alpha = alpha
 
-    def forward(self, input, target):
-        logp = self.ce(input, target)
-        p = torch.exp(-logp)
-        loss = (1 - p) ** self.gamma * logp
-        return loss.mean()
+    def forward(self, pred, target):
+        pred_sigmoid = pred.sigmoid()
+        target = target.type_as(pred)
+        pt = (1 - pred_sigmoid) * target + pred_sigmoid * (1 - target)
+        focal_weight = (self.alpha * target + (1 - self.alpha) * 
+                       (1 - target)) * pt.pow(self.gamma)
+        loss = F.binary_cross_entropy_with_logits(
+            pred, target, reduction='none') * focal_weight
+        return loss.sum(dim=1).mean()
