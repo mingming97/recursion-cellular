@@ -77,8 +77,6 @@ def main():
             raise ValueError('Illegal metric_type: {}'.format(metric_type))
         metric_fcs.append(metric_fc.cuda())
     classifier = Classifier(backbone, metric_fcs, pre_layers).cuda()
-    for name, _ in classifier.named_parameters():
-        print(name)
 
     # init loss criterion
     loss_cfg = train_cfg['loss_cfg'].copy()
