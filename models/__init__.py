@@ -5,3 +5,5 @@ from .densenet import DenseNet
 from .resnext import ResNeXt
 from .arc_module import ArcModule
 from .am_module import AmModule
+from .metrics import ArcMarginProduct, AddMarginProduct, SphereProduct
+from .focal_loss import FocalLoss

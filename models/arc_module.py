@@ -6,12 +6,13 @@ import math
 
 
 class ArcModule(nn.Module):
-    def __init__(self, in_features, out_features, s=65, m=0.5):
+    def __init__(self, in_features, out_features, s=65, m=0.5, num_classes=1108):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.s = s
         self.m = m
+        self.num_classes = num_classes
         self.weight = nn.Parameter(torch.FloatTensor(out_features, in_features))
         nn.init.xavier_normal_(self.weight)
 
@@ -37,4 +38,15 @@ class ArcModule(nn.Module):
         onehot.scatter_(1, labels, 1)
         outputs = onehot * cos_th_m + (1.0 - onehot) * cos_th
         outputs = outputs * self.s
+
+        if self.training:
+            labels_flip = labels +  self.num_classes // 2
+            labels_flip = torch.remainder(labels_flip, self.num_classes)
+            if labels_flip.dim() == 1:
+                labels_flip = labels_flip.unsqueeze(-1)
+            onehot = torch.zeros(outputs.size()).cuda()
+            onehot.scatter_(1, labels_flip, 1)
+            onehot_invert = (onehot == 0).float()
+            assert onehot_invert.size() == outputs.size()
+            outputs = outputs * onehot_invert - onehot_invert
         return outputs

@@ -8,38 +8,32 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class Classifier(nn.Module):
 
-    def __init__(self, extractor, feat_dim, extra_module=None, pre_layers=None, num_classes=1108):
+    def __init__(self, extractor, metric_fcs, pre_layers=None):
         super(Classifier, self).__init__()
+        assert len(metric_fcs) == 1 or isinstance(metric_fcs[0], nn.Linear)
         self.pre_layers = pre_layers
         self.extractor = extractor
-        self.extra_module = extra_module
-        out_feat_dim = self.extra_module.in_features if self.extra_module is not None else num_classes
-        self.feat_dim = feat_dim
-        self.num_classes = num_classes
-        self.classifier = nn.Linear(feat_dim, out_feat_dim)
+        self.metric_fcs = metric_fcs
 
-    def forward(self, x, label=None):
+    def forward(self, x, label):
         if self.pre_layers is not None:
             x = self.pre_layers(x)
         feat = self.extractor(x)
-        feat = self.classifier(feat)
-        if self.extra_module is not None:
-            feat = F.normalize(feat)
-            if label is not None:
-                return self.extra_module(feat, label)
-        return feat
+        outputs = []
+        for i, metric_fc in enumerate(self.metric_fcs):
+            if i == 0:
+                output = metric_fc(feat)
+            else:
+                output = metric_fc(feat, label)
+            outputs.append(output)
+        return outputs
 
-    def forward_test(self, x, center_feat=None):
-        with torch.no_grad():
-            if self.pre_layers is not None:
-                x = self.pre_layers(x)
-            feat = self.extractor(x)
-            feat = self.classifier(feat)
-            if self.extra_module is not None:
-                feat = F.normalize(feat)
-                if center_feat is None:
-                    return feat
-                feat = feat.cpu().numpy()
-                similarity = cosine_similarity(feat, center_feat)
-                return torch.from_numpy(similarity)
-        return feat
+    def loss(self, outputs, label, criterion):
+        losses = [criterion(output, label) for output in outputs]
+        return sum(losses) / len(losses)
+
+    def forward_test(self, x):
+        if self.pre_layers is not None:
+            x = self.pre_layers(x)
+        feat = self.extractor(x)
+        return self.metric_fcs[0](feat)

@@ -1,7 +1,5 @@
 import os
 import torch
-import numpy as np
-from tqdm import tqdm
 from .lr_scheduler import LrScheduler
 
 
@@ -26,14 +24,11 @@ class Trainer:
         self.val_frequency = log_cfg.get('val_frequency', 1)
         self.save_frequency = log_cfg.get('save_frequency', 10)
         self.lr_cfg = train_cfg['lr_cfg']
-        self.mix_up = train_cfg.get('mix_up', False)
+        self.class_correct = log_cfg.get('class_correct', False)
 
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
         self.log_file = open(os.path.join(self.log_dir, log_cfg['log_file']), 'w')
-
-        if self.mix_up:
-            self._log('Using mix up')
 
         self.accumulate_batch_size = train_cfg.get('accumulate_batch_size', -1)
         self.with_accumulate_batch = self.accumulate_batch_size > 0
@@ -114,17 +109,8 @@ class Trainer:
             data = data.cuda()
             label = label.cuda()
 
-            if self.mix_up:
-                lambda_ = np.random.beta(0.2, 0.2)
-                new_perm = torch.randperm(data.size(0))
-                mix_data = lambda_ * data + (1 - lambda_) * data[new_perm]
-                new_label = label[new_perm]
-                pred = self.model(mix_data)
-                loss = lambda_ * self.criterion(pred, label) + (1 - lambda_) * self.criterion(pred, new_label)
-            else:
-                pred = self.model(data, label)
-                loss = self.criterion(pred, label)
-
+            pred = self.model(data, label)
+            loss = self.model.loss(pred, label, self.criterion)
             loss_value = loss.item()
 
             if self.print_frequency != 0 and is_log:
@@ -136,40 +122,30 @@ class Trainer:
     def _validate(self):
         self.model.eval()
         total_sample, total_correct = 0, 0
-        correct_dict = {k: 0 for k in range(1108)}
-
-        # compute center features
-        center_feat = None if self.model.extra_module is None else [[] for i in range(1108)]
-        if center_feat is not None:
-            with torch.no_grad():
-                for data, label in self.train_dataloader:
-                    data = data.cuda()
-                    feat = self.model.forward_test(data).cpu().numpy()
-                    for l, f in zip(label, feat):
-                        center_feat[int(l.item())].append(f)
-            for i in range(1108):
-                center_feat[i] = np.mean(np.array(center_feat[i]), axis=0)
-            center_feat = np.array(center_feat)
+        if self.class_correct:
+            correct_dict = {k: 0 for k in range(1108)}
 
         with torch.no_grad():
             for data, label in self.val_dataloader:
                 data = data.cuda()
                 label = label.cuda()
 
-                output = self.model.forward_test(data, center_feat).cuda()
+                output = self.model.forward_test(data)
                 pred = output.argmax(dim=1)
                 correct = pred == label
 
                 total_sample += label.size(0)
                 total_correct += correct.sum().item()
 
-                # correct_label = label[correct].cpu().numpy()
-                # for cl in correct_label:
-                #     num = correct_dict.get(cl, 0)
-                #     correct_dict[cl] = num + 1
+                if self.class_correct:
+                    correct_label = label[correct].cpu().numpy()
+                    for cl in correct_label:
+                        num = correct_dict.get(cl, 0)
+                        correct_dict[cl] = num + 1
 
-        # for k, v in correct_dict.items():
-        #     self._log('class{} : {}/{}'.format(k, v, self.val_dataloader.dataset.num_dict[k]))
+        if self.class_correct:
+            for k, v in correct_dict.items():
+                self._log('class{} : {}/{}'.format(k, v, self.val_dataloader.dataset.num_dict[k]))
 
         return total_correct / total_sample
 

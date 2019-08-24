@@ -10,7 +10,7 @@ from utils import cfg_from_file
 
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 torch.backends.cudnn.benchmark = True
 
 
@@ -56,34 +56,52 @@ def main():
         backbone = ResNeXt(**backbone_cfg)
     elif backbone_type == 'DenseNet':
         backbone = DenseNet(**backbone_cfg)
+    else:
+        raise ValueError('Illegal backbone_type: {}'.format(backbone_type))
 
     # init loss criterion
     train_cfg, log_cfg = cfg['train'], cfg['log']
+    metric_cfg = train_cfg['metric_cfg'].copy()
+    metric_types = metric_cfg.pop('type')
+    metric_fcs = []
+    for metric_type in metric_types:
+        if metric_type == 'add_margin':
+            metric_fc = AddMarginProduct(backbone.out_feat_dim, **metric_cfg)
+        elif metric_type == 'arc_margin':
+            metric_fc = ArcMarginProduct(backbone.out_feat_dim, **metric_cfg)
+        elif metric_type == 'sphere':
+            metric_fc = SphereProduct(backbone.out_feat_dim, **metric_cfg)
+        elif metric_type == 'linear':
+            metric_fc = nn.Linear(backbone.out_feat_dim, metric_cfg['out_features'])
+        else:
+            raise ValueError('Illegal metric_type: {}'.format(metric_type))
+        metric_fcs.append(metric_fc.cuda())
+    classifier = Classifier(backbone, metric_fcs, pre_layers).cuda()
+
+    # init loss criterion
     loss_cfg = train_cfg['loss_cfg'].copy()
     loss_type = loss_cfg.pop('type')
-    extra_module = None
     if loss_type == 'pairwise_confusion':
         print('using pairwise_confusion')
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
         criterion = CrossEntropyWithPC(loss_cfg['loss_weight'])
     elif loss_type == 'cross_entropy':
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
         criterion = nn.CrossEntropyLoss()
-    elif loss_type == 'AM_softmax':
-        extra_module = AmModule(**loss_cfg)
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
-        criterion = nn.CrossEntropyLoss()
-    elif loss_type == 'Arc_Face':
-        extra_module = ArcModule(**loss_cfg)
-        classifier = Classifier(backbone, backbone.out_feat_dim, extra_module, pre_layers)
-        criterion = nn.CrossEntropyLoss()
+    elif loss_type == 'focal_loss':
+        criterion = FocalLoss()
     else:
         raise ValueError('Illegal loss_type: {}'.format(loss_type))
-    classifier = classifier.cuda()
     criterion = criterion.cuda()
 
     # init optimizer
-    optimizer = torch.optim.SGD(classifier.parameters(), **train_cfg['optimizer_cfg'])
+    optimizer_cfg = train_cfg['optimizer_cfg'].copy()
+    optimizer_type = optimizer_cfg.pop('type')
+    if optimizer_type == 'SGD':
+        optimizer = torch.optim.SGD(classifier.parameters(), **optimizer_cfg)
+    elif optimizer_type == 'adam':
+        optimizer = torch.optim.Adam(classifier.parameters(), **optimizer_cfg)
+    else:
+        raise ValueError('Illegal optimizer_type:{}'.format(optimizer_type))
+
     trainer = Trainer(
         model=classifier, 
         train_dataloader=train_dataloader, 
