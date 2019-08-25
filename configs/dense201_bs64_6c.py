@@ -29,6 +29,7 @@ train = dict(
     loss_cfg=dict(
         type='cross_entropy'),
     optimizer_cfg=dict(
+        type='SGD',
         lr=0.01,
         weight_decay=0.0001,
         momentum=0.9),

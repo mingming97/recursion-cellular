@@ -105,7 +105,8 @@ def main():
         model=classifier, 
         train_dataloader=train_dataloader, 
         val_dataloader=test_dataloader,
-        criterions=criterions, 
+        criterions=criterions,
+        loss_weights=loss_cfg.get('loss_weight', [1.0]*len(criterions)),
         optimizer=optimizer,
         train_cfg=train_cfg,
         log_cfg=log_cfg)
