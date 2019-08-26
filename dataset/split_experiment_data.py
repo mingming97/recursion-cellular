@@ -44,23 +44,44 @@ def data_static(data_path, image_size=(512, 512), num_channels=6):
 	num_pixel = image_size[0] * image_size[1]
 	mean_x = [torch.sum(x) / count / num_pixel for x in mean_x]
 	mean_x2 = [torch.sum(x) / count / num_pixel for x in mean_x2]
-	std_x = [x2 - torch.pow(x, 2) for x2, x in zip(mean_x2, mean_x)]
-	return mean_x, std_x
+	std_x = [(x2 - torch.pow(x, 2)).sqrt() for x2, x in zip(mean_x2, mean_x)]
+	return mean_x, std_x, count
 
 
 if __name__ == '__main__':
-	# train_csv = 'C:\\Users\\VI\\Desktop\\train.csv'
-	# test_csv = 'C:\\Users\\VI\\Desktop\\test.csv'
-	#
-	# split_experiment_data_list(train_csv, suffix='train')
-	# split_experiment_data_list(test_csv, suffix='test')
-	experiments = ['HEPG2', 'HUVEC', 'RPE', 'U2OS']
-	data_dir = r'F:\xuhuanqiang\kaggle_recursion_cellular\recursion-cellular-dataset\train'
+	get_split_data = False
+	get_data_static = True
+	get_experiment_data_static = True
 
-	for experiment in experiments:
-		print("static {}: ".format(experiment))
-		data_path = os.path.join(data_dir, '{}-*'.format(experiment), '*')
-		mean, std = data_static(data_path)
-		print(mean)
-		print(std)
+	if get_split_data:
+		train_csv = 'C:\\Users\\VI\\Desktop\\train.csv'
+		test_csv = 'C:\\Users\\VI\\Desktop\\test.csv'
 
+		split_experiment_data_list(train_csv, suffix='train')
+		split_experiment_data_list(test_csv, suffix='test')
+
+	data = {}
+	if get_experiment_data_static:
+		experiments = ['HEPG2', 'HUVEC', 'RPE', 'U2OS']
+		data_dir = r'F:\xuhuanqiang\kaggle_recursion_cellular\recursion-cellular-dataset\train'
+
+		for experiment in experiments:
+			print("static {}: ".format(experiment))
+			data_path = os.path.join(data_dir, '{}-*'.format(experiment), '*')
+			mean, std, count = data_static(data_path)
+			print('count:', count)
+			print('mean: ', mean)
+			print('std: ', std)
+			data[experiment + '_mean'] = mean
+			data[experiment + '_std'] = std
+
+	if get_data_static:
+		data_dir = r'F:\xuhuanqiang\kaggle_recursion_cellular\recursion-cellular-dataset\train\*\*'
+		mean, std, count = data_static(data_dir)
+		print('count:', count)
+		print('mean: ', mean)
+		print('std: ', std)
+		data['mean'] = mean
+		data['std'] = std
+
+	torch.save(data, './data_static.pth')
