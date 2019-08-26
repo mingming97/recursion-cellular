@@ -1,0 +1,12 @@
+static HEPG2: 
+[tensor(0.0588), tensor(0.0649), tensor(0.0598), tensor(0.0758), tensor(0.0535), tensor(0.0576)]
+[tensor(0.0112), tensor(0.0037), tensor(0.0049), tensor(0.0088), tensor(0.0105), tensor(0.0042)]
+static HUVEC: 
+[tensor(0.0172), tensor(0.0621), tensor(0.0284), tensor(0.0331), tensor(0.0107), tensor(0.0270)]
+[tensor(0.0006), tensor(0.0034), tensor(0.0003), tensor(0.0009), tensor(0.0002), tensor(0.0004)]
+static RPE: 
+[tensor(0.0110), tensor(0.0459), tensor(0.0507), tensor(0.0269), tensor(0.0184), tensor(0.0375)]
+[tensor(0.0002), tensor(0.0023), tensor(0.0013), tensor(0.0006), tensor(0.0004), tensor(0.0007)]
+static U2OS: 
+[tensor(0.0363), tensor(0.0465), tensor(0.0443), tensor(0.0348), tensor(0.0123), tensor(0.0575)]
+[tensor(0.0024), tensor(0.0014), tensor(0.0006), tensor(0.0007), tensor(0.0002), tensor(0.0013)]
