@@ -81,6 +81,8 @@ class Trainer:
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
+
+            score = 0
             if epoch % self.val_frequency == 0:
                 score = self._validate()
                 self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
