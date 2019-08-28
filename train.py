@@ -30,7 +30,7 @@ def main():
 
     data_cfg = cfg['data']
     train_datalist = datalist_from_file(data_cfg['train_datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
-    val_datalist = datalist_from_file(data_cfg['val_datalist_path'], data_mode=data_mode.get('data_mode', 'rgb'))
+    val_datalist = datalist_from_file(data_cfg['val_datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
     print('train data number:{}'.format(len(train_datalist)))
     print('val data number:{}'.format(len(val_datalist)))
 
