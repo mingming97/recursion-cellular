@@ -11,7 +11,7 @@ def split_experiment_data_list(origin_path, suffix='train'):
 	df = pd.read_csv(origin_path)
 	new_dfs = dict()
 
-	for i in range(len(df)): 
+	for i in range(len(df)):
 		row = df.loc[i]
 		experiment = row['experiment'].split('-')[0]
 		experiment_df = new_dfs.get(experiment, pd.DataFrame())
@@ -20,7 +20,7 @@ def split_experiment_data_list(origin_path, suffix='train'):
 
 	for experiment, experiment_df in new_dfs.items():
 		experiment_df['plate'] = experiment_df['plate'].astype(int)
-		experiment_df.to_csv('./{}_{}.csv'.format(experiment, suffix))
+		experiment_df.to_csv('./{}_{}.csv'.format(experiment, suffix), index=0)
 
 
 def data_static(data_path, image_size=(512, 512), num_channels=6):
@@ -49,9 +49,9 @@ def data_static(data_path, image_size=(512, 512), num_channels=6):
 
 
 if __name__ == '__main__':
-	get_split_data = False
-	get_data_static = True
-	get_experiment_data_static = True
+	get_split_data = True
+	get_data_static = False
+	get_experiment_data_static = False
 
 	if get_split_data:
 		train_csv = 'C:\\Users\\VI\\Desktop\\train.csv'

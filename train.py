@@ -29,16 +29,20 @@ def main():
     print('using config: {}'.format(args.config))
 
     data_cfg = cfg['data']
-    datalist = datalist_from_file(data_cfg['datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
-    num_train_files = len(datalist) // 10 * 9
+    train_datalist = datalist_from_file(data_cfg['train_datalist_path'], data_mode=data_cfg.get('data_mode', 'rgb'))
+    val_datalist = datalist_from_file(data_cfg['val_datalist_path'], data_mode=data_mode.get('data_mode', 'rgb'))
+    print('train data number:{}'.format(len(train_datalist)))
+    print('val data number:{}'.format(len(val_datalist)))
+
+
     train_dataset = RxDataset(data_cfg['dataset_path'],
-                              datalist[:num_train_files],
+                              train_datalist,
                               transform=data_cfg.get('train_transform', None),
                               data_mode=data_cfg.get('data_mode', 'rgb'),
                               normalize=data_cfg.get('normalize', None),
                               resize=data_cfg.get('resize', None))
     test_dataset = RxDataset(data_cfg['dataset_path'],
-                             datalist[num_train_files:],
+                             val_datalist,
                              transform=data_cfg.get('test_transform', None),
                              data_mode=data_cfg.get('data_mode', 'rgb'),
                              normalize=data_cfg.get('normalize', None),
