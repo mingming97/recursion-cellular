@@ -55,7 +55,7 @@ class Trainer:
             state = torch.load(checkpoint)
             model.load_state_dict(state['model_params'])
             self.start_epoch = state['epoch'] + 1
-            self.best_score = state['best_score']
+            self.best_score = state.get('best_score', state['score'])
             self._log('load checkpoint: {}.\nepoch: {}    score: {}'.format(
                 checkpoint, self.start_epoch, self.best_score))
             self.cur_iter = state.get('iter', 1)
