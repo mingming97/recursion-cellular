@@ -55,7 +55,7 @@ class Trainer:
             state = torch.load(checkpoint)
             model.load_state_dict(state['model_params'])
             self.start_epoch = state['epoch'] + 1
-            self.best_score = state['score']
+            self.best_score = state['best_score']
             self._log('load checkpoint: {}.\nepoch: {}    score: {}'.format(
                 checkpoint, self.start_epoch, self.best_score))
             self.cur_iter = state.get('iter', 1)
@@ -82,15 +82,13 @@ class Trainer:
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
 
-            score = 0
-            if epoch % self.val_frequency == 0:
-                score = self._validate()
-                self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
-                if self.best_score < score:
-                    self.best_score = score
-                    self.best_epoch = epoch
-                    self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
-                    self._save_checkpoint(epoch, score, name='best_model')
+            score = self._validate()
+            self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
+            if self.best_score < score:
+                self.best_score = score
+                self.best_epoch = epoch
+                self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
+                self._save_checkpoint(epoch, score, name='best_model')
             if epoch % self.save_frequency == 0:
                 self._save_checkpoint(epoch, score, name='epoch_{}'.format(epoch))
             else:
@@ -170,6 +168,7 @@ class Trainer:
         state = {
             'iter': self.cur_iter,
             'epoch': epoch,
+            'best_score': self.best_score,
             'score': score,
             'model_params': self.model.state_dict()
         }
