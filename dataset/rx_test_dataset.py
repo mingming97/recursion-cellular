@@ -1,5 +1,6 @@
 import torch
 from torch.utils import data
+import torchvision.transforms.functional as F
 from torchvision import transforms
 from PIL import Image
 import numpy as np
@@ -8,9 +9,11 @@ import os
 
 
 class RxTestDataset(data.Dataset):
-    def __init__(self, img_dir, datalist, transform=None, data_mode='rgb'):
+    def __init__(self, img_dir, datalist, transform=None, data_mode='rgb', normalize=None, resize=None):
         super(RxTestDataset, self).__init__()
         assert data_mode in ('rgb', 'six_channels')
+        assert normalize is None or isinstance(normalize, dict)
+
         self.img_dir = img_dir
 
         if data_mode == 'rgb':
@@ -21,16 +24,16 @@ class RxTestDataset(data.Dataset):
                 [0.229, 0.224, 0.225])
             ]) if transform is None else transform
         else:
-            self.transform = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor()
-            ]) if transform is None else transform
+            self.transform = transform
 
         # datalist: a list like [('img_name', 'label'), ...]
         assert len(datalist) % 2 == 0
         self.datalist_s1 = datalist[:len(datalist) // 2]
         self.datalist_s2 = datalist[len(datalist) // 2:]
         self.data_mode = data_mode
+
+        self.normalize = normalize
+        self.resize = resize
         self._cal_num_dict()
 
     def _cal_num_dict(self):
@@ -44,9 +47,9 @@ class RxTestDataset(data.Dataset):
 
     def _get_one_pic(self, site, idx):
         if site == 1:
-            img_name, label = self.datalist_s1[idx]
+            img_name, _ = self.datalist_s1[idx]
         else:
-            img_name, label = self.datalist_s2[idx]
+            img_name, _ = self.datalist_s2[idx]
         if self.data_mode == 'rgb':
             imgs = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
             imgs = self.transform(imgs)
@@ -55,14 +58,20 @@ class RxTestDataset(data.Dataset):
             for i in range(1, 7):
                 img_full_name = img_name + 'w{}.png'.format(i)
                 img = Image.open(os.path.join(self.img_dir, img_full_name))
+                img = self._single_channel_transform(img, i-1)
                 imgs.append(img)
-            if label is not None:
-                label = torch.tensor(label)
-            imgs = np.stack(imgs, axis=-1)
-            imgs = self.transform(imgs)
+            imgs = torch.stack(imgs, dim=0)
         return imgs
 
     def __getitem__(self, idx):
         imgs_s1 = self._get_one_pic(1, idx)
         imgs_s2 = self._get_one_pic(2, idx)
         return imgs_s1, imgs_s2
+
+    def _single_channel_transform(self, img, channels_index):
+        if self.resize is not None:
+            img = F.resize(img, self.resize)
+        img = F.to_tensor(img).squeeze()
+        if self.normalize is not None:
+            img.sub_(self.normalize['mean'][channels_index]).div_(self.normalize['std'][channels_index])
+        return img
