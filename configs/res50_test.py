@@ -18,10 +18,10 @@ data = dict(
     dataset_path='/home1/liangjianming/recursion-cellular/test',
     datalist_path='/home1/liangjianming/rgb-recursion-cellular/test.csv',
     data_mode='six_channels',
-    batch_size=32,
+    batch_size=64,
     resize=(384, 384),
     normalize=dict(
-        mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
-        std=[0.03121084, 0.04773749, 0.02298717, 0.0307236, 0.01843595, 0.02129923]))
+        mean=[0.02645406, 0.05782261, 0.04123408, 0.04099084, 0.02156311, 0.03849946],
+        std=[0.05697599, 0.05549077, 0.04151200, 0.05318175, 0.05224787, 0.03929300]))
 
 outfile = 'res50.csv'

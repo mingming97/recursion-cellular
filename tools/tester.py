@@ -62,10 +62,9 @@ class Tester:
         with torch.no_grad():
             for data, label in tqdm(self.dataloader):
                 data = data.cuda()
-                label = label.cuda()
 
                 output = self.model.forward_test(data)
-                pred = output.argmax(dim=1)
+                pred = output.argmax(dim=1).cpu()
                 correct = pred == label
 
                 total_sample += label.size(0)
