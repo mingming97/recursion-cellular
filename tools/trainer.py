@@ -77,7 +77,7 @@ class Trainer:
         self.log_file.flush()
 
     def train(self):
-        for epoch in range(self.start_epoch, self.epoch):
+        for epoch in range(self.start_epoch, self.epoch + 1):
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
@@ -92,7 +92,7 @@ class Trainer:
             if epoch % self.save_frequency == 0:
                 self._save_checkpoint(epoch, score, name='epoch_{}'.format(epoch))
             else:
-                self._save_checkpoint(epoch, score, name='lastest_model')
+                self._save_checkpoint(epoch, score, name='latest_model')
 
     def _update_params(self, loss):
         if not self.with_accumulate_batch:
