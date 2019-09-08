@@ -10,7 +10,7 @@ import argparse
 import random
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 torch.backends.cudnn.benchmark = True
 
 

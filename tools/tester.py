@@ -90,10 +90,18 @@ class Tester:
             for data_s1, data_s2 in tqdm(self.dataloader):
                 data_s1 = data_s1.cuda()
                 data_s2 = data_s2.cuda()
-                output_s1 = F.softmax(self.model.forward_test(data_s1), dim=1)
-                output_s2 = F.softmax(self.model.forward_test(data_s2), dim=1)
-                output = (output_s1 + output_s2) / 2
+
+                # output_s1 = F.softmax(self.model.forward_test(data_s1), dim=1)
+                # output_s2 = F.softmax(self.model.forward_test(data_s2), dim=1)
+                # output = (output_s1 + output_s2) / 2
+                # idx = output.argmax(dim=1).cpu().numpy()
+
+                output_s1 = self.model.forward_test(data_s1)
+                output_s2 = self.model.forward_test(data_s2)
+                start = time.time()
+                output = torch.where(output_s1 > output_s2, output_s1, output_s2)
                 idx = output.argmax(dim=1).cpu().numpy()
+
                 preds = np.append(preds, idx, axis=0)
 
         submission['sirna'] = preds.astype(int)
