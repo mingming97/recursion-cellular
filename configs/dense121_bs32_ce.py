@@ -19,7 +19,7 @@ data = dict(
         std=[0.05697599, 0.05549077, 0.04151200, 0.05318175, 0.05224787, 0.03929300]),)
 
 train = dict(
-    epoch=60,
+    epoch=40,
     metric_cfg=dict(
         type=['linear'],
         out_features=1108),
@@ -27,16 +27,16 @@ train = dict(
         type=['cross_entropy']),
     optimizer_cfg=dict(
         type='SGD',
-        lr=0.01,
+        lr=0.005,
         momentum=0.9,
         weight_decay=0.0001,),
     lr_cfg=dict(
         warmup='linear',
         warmup_iters=500,
         gamma=0.1,
-        step=[30, 50]),
+        step=[25, 35]),
     accumulate_batch_size=32,
-    load_from='./work_dir/dense121/dense121_bs32_ce/epoch_40.pth',
+    load_from='./work_dir/dense121/dense121_bs32_ce/epoch_20.pth',
     checkpoint=None,)
 
 

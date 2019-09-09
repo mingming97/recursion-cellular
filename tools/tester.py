@@ -98,7 +98,6 @@ class Tester:
 
                 output_s1 = self.model.forward_test(data_s1)
                 output_s2 = self.model.forward_test(data_s2)
-                start = time.time()
                 output = torch.where(output_s1 > output_s2, output_s1, output_s2)
                 idx = output.argmax(dim=1).cpu().numpy()
 
