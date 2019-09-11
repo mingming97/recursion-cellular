@@ -91,7 +91,7 @@ class Trainer:
             if epoch % self.save_frequency == 0:
                 self._save_checkpoint(epoch, score, name='epoch_{}'.format(epoch))
             else:
-                self._save_checkpoint(epoch, score, name='latest_model')
+                self._save_checkpoint(epoch, 0, name='latest_model')
 
     def _update_params(self, loss):
         if not self.with_accumulate_batch:
