@@ -10,7 +10,7 @@ import argparse
 import random
 
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 torch.backends.cudnn.benchmark = True
 
 
@@ -35,16 +35,12 @@ def main():
         dataset = RxDataset(data_cfg['dataset_path'],
                             datalist,
                             transform=data_cfg.get('train_transform', None),
-                            data_mode=data_cfg.get('data_mode', 'rgb'),
-                            normalize=data_cfg.get('normalize', None),
-                            resize=data_cfg.get('resize', None))
+                            data_mode=data_cfg.get('data_mode', 'rgb'))
     else:
         dataset = RxTestDataset(data_cfg['dataset_path'],
                                 datalist,
                                 transform=data_cfg.get('test_transform', None),
-                                data_mode=data_cfg.get('data_mode', 'rgb'),
-                                normalize=data_cfg.get('normalize', None),
-                                resize=data_cfg.get('resize', None))
+                                data_mode=data_cfg.get('data_mode', 'rgb'))
 
     dataloader = data.DataLoader(dataset, batch_size=data_cfg['batch_size'], shuffle=False)
 

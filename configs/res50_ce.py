@@ -1,9 +1,8 @@
 from torchvision import transforms
 
-
 backbone = dict(
-    type='DenseNet',
-    depth=201,
+    type='ResNet',
+    depth=50,
     in_channel=6,
     context_block_cfg=None,
     pretrained=True,)
@@ -13,17 +12,17 @@ data = dict(
     train_datalist_path='./dataset/csv_files/train.csv',
     val_datalist_path='./dataset/csv_files/val.csv',
     data_mode='six_channels',
-    batch_size=8,
+    batch_size=16,
     train_transform=transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
-                                     std=[0.03121084, 0.04773749, 0.02298717, 0.0307236 , 0.01843595, 0.02129923])
-                ]),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
+                                 std=[0.03121084, 0.04773749, 0.02298717, 0.0307236 , 0.01843595, 0.02129923])
+            ]),
     test_transform=transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
-                                     std=[0.03121084, 0.04773749, 0.02298717, 0.0307236 , 0.01843595, 0.02129923])
-                ]),)
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.02645871, 0.05782903, 0.04122592, 0.04099488, 0.02156705, 0.03849198],
+                                 std=[0.03121084, 0.04773749, 0.02298717, 0.0307236 , 0.01843595, 0.02129923])
+            ]))
 
 train = dict(
     epoch=60,
@@ -43,12 +42,13 @@ train = dict(
         gamma=0.1,
         step=[30, 50]),
     accumulate_batch_size=64,
+    load_from=None,
     checkpoint=None,)
 
 
 log = dict(
-    log_dir='./work_dir/dense201/dense201_ce',
+    log_dir='./work_dir/res50/res50_ce',
     log_file='logs.log',
     val_frequency=2,
-    print_frequency=50,
-    save_frequency=10)
+    save_frequency=10,
+    print_frequency=50)

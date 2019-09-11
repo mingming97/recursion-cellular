@@ -8,14 +8,13 @@ class Trainer:
                  model, 
                  train_dataloader, 
                  val_dataloader, 
-                 criterions,
-                 loss_weights,
+                 criterion,
                  optimizer,
                  train_cfg, 
                  log_cfg):
         self.model = model
-        self.criterions = criterions
-        self.loss_weights = loss_weights
+        self.model.cuda()
+        self.criterion = criterion
         self.optimizer = optimizer
         self.train_dataloader = train_dataloader
         self.val_dataloader = val_dataloader
@@ -81,14 +80,14 @@ class Trainer:
             self.lr_scheduler.epoch_schedule(epoch)
             self._log('epoch: {} | lr: {}'.format(epoch, self.lr_scheduler.base_lr[0]))
             self._train_one_epoch(epoch)
-
-            score = self._validate()
-            self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
-            if self.best_score < score:
-                self.best_score = score
-                self.best_epoch = epoch
-                self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
-                self._save_checkpoint(epoch, score, name='best_model')
+            if epoch % self.val_frequency == 0:
+                score = self._validate()
+                self._log('epoch: {} | validate score: {:.6f}'.format(epoch, score))
+                if self.best_score < score:
+                    self.best_score = score
+                    self.best_epoch = epoch
+                    self._log('best_epoch: {} | best_score: {}'.format(self.best_epoch, self.best_score))
+                    self._save_checkpoint(epoch, score, name='best_model')
             if epoch % self.save_frequency == 0:
                 self._save_checkpoint(epoch, score, name='epoch_{}'.format(epoch))
             else:
@@ -119,16 +118,13 @@ class Trainer:
             data = data.cuda()
             label = label.cuda()
 
-            pred = self.model(data, label)
-            losses = self.model.losses(pred, label, self.criterions)
-            weighted_losses = [weight * loss for weight, loss in zip(self.loss_weights, losses)]
-            loss_values = [loss.item() for loss in weighted_losses].__repr__()
-            loss = sum(weighted_losses)
-            tot_loss = loss.item()
+            pred = self.model(data)
+            loss = self.criterion(pred, label)
+            loss_val = loss.item()
 
             if self.print_frequency != 0 and is_log:
-                self._log('epoch: {} | iter: {} | loss_values: {} | tot_loss: {:.6f}'.format(
-                    epoch, self.cur_iter, loss_values, tot_loss))
+                self._log('epoch: {} | iter: {} | tot_loss: {:.6f}'.format(
+                    epoch, self.cur_iter, loss_val))
 
             self._update_params(loss)
 

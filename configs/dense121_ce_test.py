@@ -10,7 +10,7 @@ net_cfg = dict(
     metric_fcs=dict(
         type=['linear'],
         out_features=1108),
-    checkpoint='./work_dir/dense121/dense121_bs32_ce_HUVEC/epoch_10.pth')
+    checkpoint='./work_dir/dense121/dense121_bs32_ce_HUVEC/best_model.pth')
 
 data = dict(
     dataset_path='/home1/liangjianming/recursion-cellular/test',
@@ -22,4 +22,4 @@ data = dict(
         mean=[0.02645406, 0.05782261, 0.04123408, 0.04099084, 0.02156311, 0.03849946],
         std=[0.05697599, 0.05549077, 0.04151200, 0.05318175, 0.05224787, 0.03929300]))
 
-outfile = 'dense121_HUVEC.csv'
+outfile = 'dense121_HUVEC_2site.csv'

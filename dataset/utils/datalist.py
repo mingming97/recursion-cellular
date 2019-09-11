@@ -27,3 +27,11 @@ def datalist_from_file(label_file, data_mode='rgb'):
             img_path = os.path.join(experiment_index, 'Plate{}'.format(plate_index), '{}_{}_'.format(well_index, site))
             datalist.append((img_path, sirna))
     return datalist
+
+if __name__ == '__main__':
+    lst = datalist_from_file('/home1/liangjianming/rgb-recursion-cellular/train.csv', 'six_channels')
+    end = len(lst) // 10 * 9
+    lst = lst[:end]
+    for path, _ in lst:
+        if path.find('RPE') != -1:
+            print('train: ' + path)

@@ -38,15 +38,11 @@ def main():
     train_dataset = RxDataset(data_cfg['dataset_path'],
                               train_datalist,
                               transform=data_cfg.get('train_transform', None),
-                              data_mode=data_cfg.get('data_mode', 'rgb'),
-                              normalize=data_cfg.get('normalize', None),
-                              resize=data_cfg.get('resize', None))
+                              data_mode=data_cfg.get('data_mode', 'rgb'))
     test_dataset = RxDataset(data_cfg['dataset_path'],
                              val_datalist,
                              transform=data_cfg.get('test_transform', None),
-                             data_mode=data_cfg.get('data_mode', 'rgb'),
-                             normalize=data_cfg.get('normalize', None),
-                             resize=data_cfg.get('resize', None))
+                             data_mode=data_cfg.get('data_mode', 'rgb'))
     train_dataloader = data.DataLoader(train_dataset, batch_size=data_cfg['batch_size'], shuffle=True)
     test_dataloader = data.DataLoader(test_dataset, batch_size=data_cfg['batch_size'])
     pre_layers = data_cfg.get('pre_layers', None)
@@ -63,37 +59,31 @@ def main():
     else:
         raise ValueError('Illegal backbone_type: {}'.format(backbone_type))
 
-    # init loss criterion
+    # init metric_fc
     train_cfg, log_cfg = cfg['train'], cfg['log']
     metric_cfg = train_cfg['metric_cfg'].copy()
-    metric_types = metric_cfg.pop('type')
-    metric_fcs = nn.ModuleList()
-    for metric_type in metric_types:
-        if metric_type == 'add_margin':
-            metric_fc = AddMarginProduct(backbone.out_feat_dim, **metric_cfg)
-        elif metric_type == 'arc_margin':
-            metric_fc = ArcMarginProduct(backbone.out_feat_dim, **metric_cfg)
-        elif metric_type == 'sphere':
-            metric_fc = SphereProduct(backbone.out_feat_dim, **metric_cfg)
-        elif metric_type == 'linear':
-            metric_fc = nn.Linear(backbone.out_feat_dim, metric_cfg['out_features'])
-        else:
-            raise ValueError('Illegal metric_type: {}'.format(metric_type))
-        metric_fcs.append(metric_fc.cuda())
-    classifier = Classifier(backbone, metric_fcs, pre_layers).cuda()
+    metric_type = metric_cfg.pop('type')
+    if metric_type == 'add_margin':
+        metric_fc = AddMarginProduct(backbone.out_feat_dim, **metric_cfg)
+    elif metric_type == 'arc_margin':
+        metric_fc = ArcMarginProduct(backbone.out_feat_dim, **metric_cfg)
+    elif metric_type == 'sphere':
+        metric_fc = SphereProduct(backbone.out_feat_dim, **metric_cfg)
+    elif metric_type == 'linear':
+        metric_fc = nn.Linear(backbone.out_feat_dim, metric_cfg['out_features'])
+    else:
+        raise ValueError('Illegal metric_type: {}'.format(metric_type))
+    classifier = Classifier(backbone, metric_fc, pre_layers)
 
     # init loss criterion
     loss_cfg = train_cfg['loss_cfg'].copy()
-    loss_types = loss_cfg.pop('type')
-    criterions = list()
-    for loss_type in loss_types:
-        if loss_type == 'cross_entropy':
-            criterion = nn.CrossEntropyLoss()
-        elif loss_type == 'focal_loss':
-            criterion = FocalLoss()
-        else:
-            raise ValueError('Illegal loss_type: {}'.format(loss_type))
-        criterions.append(criterion.cuda())
+    loss_type = loss_cfg.pop('type')
+    if loss_type == 'cross_entropy':
+        criterion = nn.CrossEntropyLoss()
+    elif loss_type == 'focal_loss':
+        criterion = FocalLoss()
+    else:
+        raise ValueError('Illegal loss_type: {}'.format(loss_type))
 
     # init optimizer
     optimizer_cfg = train_cfg['optimizer_cfg'].copy()
@@ -109,8 +99,7 @@ def main():
         model=classifier, 
         train_dataloader=train_dataloader, 
         val_dataloader=test_dataloader,
-        criterions=criterions,
-        loss_weights=loss_cfg.get('loss_weight', [1.0]*len(criterions)),
+        criterion=criterion,
         optimizer=optimizer,
         train_cfg=train_cfg,
         log_cfg=log_cfg)

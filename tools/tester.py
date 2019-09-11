@@ -16,13 +16,14 @@ class Tester:
         self.dataloader = dataloader
 
         backbone = self.build_backbone(cfg['backbone'].copy())
-        metric_fcs = self.build_metric_fcs(cfg['metric_fcs'].copy(), backbone.out_feat_dim)
-        self.model = Classifier(backbone, metric_fcs).cuda()
+        metric_fc = self.build_metric_fc(cfg['metric_fc'].copy(), backbone.out_feat_dim)
+        self.model = Classifier(backbone, metric_fc)
 
         checkpoint = cfg['checkpoint']
         assert os.path.exists(checkpoint)
         state_dict = torch.load(checkpoint)
         self.model.load_state_dict(state_dict['model_params'])
+        self.model.cuda()
         self.model.eval()
 
         self.results = []
@@ -39,22 +40,19 @@ class Tester:
             raise ValueError('Illegal backbone: {}'.format(backbone_type))
         return backbone
 
-    def build_metric_fcs(self, metric_cfg, out_feat_dim):
-        metric_types = metric_cfg.pop('type')
-        metric_fcs = nn.ModuleList()
-        for metric_type in metric_types:
-            if metric_type == 'add_margin':
-                metric_fc = AddMarginProduct(out_feat_dim, **metric_cfg)
-            elif metric_type == 'arc_margin':
-                metric_fc = ArcMarginProduct(out_feat_dim, **metric_cfg)
-            elif metric_type == 'sphere':
-                metric_fc = SphereProduct(out_feat_dim, **metric_cfg)
-            elif metric_type == 'linear':
-                metric_fc = nn.Linear(out_feat_dim, metric_cfg['out_features'])
-            else:
-                raise ValueError('Illegal metric_type: {}'.format(metric_type))
-            metric_fcs.append(metric_fc)
-        return metric_fcs
+    def build_metric_fc(self, metric_cfg, out_feat_dim):
+        metric_type = metric_cfg.pop('type')
+        if metric_type == 'add_margin':
+            metric_fc = AddMarginProduct(out_feat_dim, **metric_cfg)
+        elif metric_type == 'arc_margin':
+            metric_fc = ArcMarginProduct(out_feat_dim, **metric_cfg)
+        elif metric_type == 'sphere':
+            metric_fc = SphereProduct(out_feat_dim, **metric_cfg)
+        elif metric_type == 'linear':
+            metric_fc = nn.Linear(out_feat_dim, metric_cfg['out_features'])
+        else:
+            raise ValueError('Illegal metric_type: {}'.format(metric_type))
+        return metric_fc
 
     def val_on_dataloader(self):
         total_sample, total_correct = 0, 0
@@ -91,15 +89,15 @@ class Tester:
                 data_s1 = data_s1.cuda()
                 data_s2 = data_s2.cuda()
 
-                # output_s1 = F.softmax(self.model.forward_test(data_s1), dim=1)
-                # output_s2 = F.softmax(self.model.forward_test(data_s2), dim=1)
-                # output = (output_s1 + output_s2) / 2
-                # idx = output.argmax(dim=1).cpu().numpy()
-
-                output_s1 = self.model.forward_test(data_s1)
-                output_s2 = self.model.forward_test(data_s2)
-                output = torch.where(output_s1 > output_s2, output_s1, output_s2)
+                output_s1 = F.softmax(self.model.forward_test(data_s1), dim=1)
+                output_s2 = F.softmax(self.model.forward_test(data_s2), dim=1)
+                output = (output_s1 + output_s2) / 2
                 idx = output.argmax(dim=1).cpu().numpy()
+
+                # output_s1 = self.model.forward_test(data_s1)
+                # output_s2 = self.model.forward_test(data_s2)
+                # output = torch.where(output_s1 > output_s2, output_s1, output_s2)
+                # idx = output.argmax(dim=1).cpu().numpy()
 
                 preds = np.append(preds, idx, axis=0)
 
