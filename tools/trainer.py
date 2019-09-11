@@ -123,7 +123,7 @@ class Trainer:
             loss_val = loss.item()
 
             if self.print_frequency != 0 and is_log:
-                self._log('epoch: {} | iter: {} | tot_loss: {:.6f}'.format(
+                self._log('epoch: {} | iter: {} | loss: {:.6f}'.format(
                     epoch, self.cur_iter, loss_val))
 
             self._update_params(loss)
