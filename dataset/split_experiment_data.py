@@ -54,11 +54,11 @@ if __name__ == '__main__':
 	get_experiment_data_static = False
 
 	if get_split_data:
-		train_csv = 'C:\\Users\\VI\\Desktop\\train.csv'
-		test_csv = 'C:\\Users\\VI\\Desktop\\test.csv'
+		train_csv = r'D:\somethingElse\other_projects\recursion-cellular\dataset\csv_files\train.csv'
+		test_csv = r'D:\somethingElse\other_projects\recursion-cellular\dataset\csv_files\val.csv'
 
-		split_experiment_data_list(train_csv, suffix='train')
-		split_experiment_data_list(test_csv, suffix='test')
+		split_experiment_data_list(train_csv, suffix='train_plate')
+		split_experiment_data_list(test_csv, suffix='val_plate')
 
 	data = {}
 	if get_experiment_data_static:
