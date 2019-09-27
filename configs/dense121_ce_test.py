@@ -1,5 +1,5 @@
 from torchvision import transforms
-# U2OS RPE HEPG2 HUVEC
+
 net_cfg = dict(
     backbone=dict(
         type='DenseNet',

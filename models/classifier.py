@@ -11,13 +11,13 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
         self.pre_layers = pre_layers
         self.extractor = extractor
-        self.metric_fc = metric_fc
+        self.classifier = metric_fc
 
     def forward(self, x):
         if self.pre_layers is not None:
             x = self.pre_layers(x)
         feat = self.extractor(x)
-        output = self.metric_fc(feat)
+        output = self.classifier(feat)
         return output
 
     def losses(self, output, label, criterion):
@@ -27,5 +27,5 @@ class Classifier(nn.Module):
         if self.pre_layers is not None:
             x = self.pre_layers(x)
         feat = self.extractor(x)
-        output = self.metric_fc(feat)
+        output = self.classifier(feat)
         return output
